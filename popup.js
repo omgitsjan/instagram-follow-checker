@@ -159,8 +159,7 @@ async function disableImpersonator() {
   updateImpersonatorUi();
   refreshHeaderDisplay();
   setIdleStatus();
-  setStatus(t("impersonatorReset"), "ok");
-  // Reload own header account from IG
+  // Quiet reset — Impersonator stays a low-key settings feature (no main status toast)
   loadHeaderAccount();
 }
 
@@ -1642,7 +1641,6 @@ async function submitImpersonator() {
     state.impersonating = false;
     state.readOnly = false;
     setImpersonatorStatus(err?.message || String(err), "error");
-    setStatus(err?.message || String(err), "error");
     if (impersonatorSubmit) impersonatorSubmit.disabled = false;
     updateImpersonatorUi();
   }
@@ -1650,7 +1648,6 @@ async function submitImpersonator() {
 
 startBtn.addEventListener("click", () => {
   if (isImpersonatorActive()) {
-    setStatus(t("impersonatorUseSubmit"), "error");
     openSettings();
     return;
   }
