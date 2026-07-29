@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+*.zip
+instagram-follow-checker-v*.zip
+_release_stage/
+node_modules/

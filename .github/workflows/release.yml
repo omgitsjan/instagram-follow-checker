@@ -1,0 +1,77 @@
+name: Release
+
+# Tag: git tag v1.2.0 && git push origin v1.2.0
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate
+        run: |
+          node scripts/validate-extension.mjs
+          node --check content.js
+          node --check popup.js
+          node --check i18n.js
+
+      - name: Check tag matches manifest version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          MANIFEST=$(node -p "require('./manifest.json').version")
+          echo "Tag version:      $TAG"
+          echo "Manifest version: $MANIFEST"
+          if [ "$TAG" != "$MANIFEST" ]; then
+            echo "::error::Tag v$TAG does not match manifest.json version $MANIFEST"
+            exit 1
+          fi
+
+      - name: Package zip
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          ZIP="instagram-follow-checker-v${VERSION}.zip"
+          zip -r "$ZIP" \
+            manifest.json \
+            content.js \
+            popup.html \
+            popup.js \
+            popup.css \
+            i18n.js \
+            icons \
+            LICENSE \
+            README.md
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Instagram Follow Checker v${{ env.VERSION }}
+          body: |
+            ## Instagram Follow Checker v${{ env.VERSION }}
+
+            Unpacked Chrome extension ZIP (English UI + DE/EN language switch).
+
+            ### Install
+            1. Download and unzip
+            2. `chrome://extensions` → Developer mode → **Load unpacked**
+            3. Select the unzipped folder
+
+            ⚠️ **Use at your own risk** — see README (ToS / account risks, no warranty, vibe-coded).
+          files: ${{ env.ZIP }}
+          fail_on_unmatched_files: true
+          generate_release_notes: true

@@ -1,0 +1,128 @@
+Instagram Follow Checker – see who follows you back
+
+Find mutual follows, people who don’t follow you back, and followers you don’t follow yet. Free, open source, and works with your normal Instagram login in Chrome. No Instagram API keys. No paid unlock. No data sent to our servers.
+
+
+═══════════════════════════════════════
+WHAT IT DOES
+═══════════════════════════════════════
+
+Instagram Follow Checker compares your Following list with your Followers list and organizes people into three clear tabs:
+
+• Mutual – you follow them and they follow you
+• Not following back – you follow them, they don’t follow you
+• You don’t follow – they follow you, you don’t follow them
+
+From the lists you can:
+• Open any profile with one click
+• Unfollow accounts that don’t follow you back
+• Follow accounts that follow you (private accounts may show as “Requested”)
+• Search by username
+• Export results as JSON for your own records
+
+Profile pictures are shown when available. Your last analysis can be restored when you reopen the extension.
+
+
+═══════════════════════════════════════
+HOW IT WORKS (NO OFFICIAL API)
+═══════════════════════════════════════
+
+This extension does not use Instagram’s official Graph API and does not require Meta developer apps or tokens.
+
+While you are logged into instagram.com in Chrome, it uses the same kind of browser session requests the Instagram website already makes to load follower/following lists. Comparison and display happen locally in your browser.
+
+• No account password is collected by this extension
+• No analysis data is uploaded to the developer’s servers
+• Language preference and last results are stored only in Chrome’s local extension storage on your device
+
+
+═══════════════════════════════════════
+HOW TO USE
+═══════════════════════════════════════
+
+1. Install the extension from the Chrome Web Store
+2. Open https://www.instagram.com and log in
+3. Click the Instagram Follow Checker icon
+4. Press “Start analysis” and wait for both lists to load
+5. Browse the three tabs, search, export, or follow/unfollow as needed
+
+Tips:
+• Keep the Instagram tab open while analyzing
+• Large accounts take longer (the extension pages results with short pauses to reduce rate limits)
+• If Instagram returns an error or rate limit (e.g. 429), wait a few minutes and try again
+• Use Settings (gear icon) to switch language English/Deutsch, open the source code, or tip the developer
+
+
+═══════════════════════════════════════
+FEATURES
+═══════════════════════════════════════
+
+✓ Three relationship lists: mutual / not following back / you don’t follow
+✓ Follow and unfollow actions from the popup
+✓ Profile pictures with fallback loading
+✓ Search within each list
+✓ JSON export
+✓ English UI by default + German language option
+✓ Open source on GitHub
+✓ Lightweight Manifest V3 extension
+✓ No subscription, no paywall, no forced account with us
+
+
+═══════════════════════════════════════
+PRIVACY
+═══════════════════════════════════════
+
+Permissions are limited to what the extension needs:
+• Access to instagram.com (and related image CDNs) so it can read list data and show avatars while you are logged in
+• Storage for language preference and the last local analysis result
+• Active tab / scripting so the extension can talk to the open Instagram tab
+
+We do not run a backend that receives your follower lists. Use of Instagram remains between you and Meta/Instagram under their policies.
+
+
+═══════════════════════════════════════
+IMPORTANT – TERMS, RISK & DISCLAIMER
+═══════════════════════════════════════
+
+This is an independent, unofficial tool. It is NOT affiliated with, endorsed by, or sponsored by Meta, Instagram, or any related company.
+
+Using automation-like or non-official access patterns may conflict with Instagram/Meta Terms of Use or related policies. Possible consequences include temporary action blocks, feature limits, or account restrictions—depending on Instagram’s systems and how you use the tool.
+
+By using this extension you agree that:
+• You use it at your own risk
+• The authors provide it “as is” without warranty of any kind
+• The authors are not liable for account bans, lost followers, data loss, or any damages
+• You will not use it for spam, harassment, bulk abuse, or any illegal purpose
+• You are responsible for complying with Instagram/Meta rules and applicable law
+
+Recommended: do not mass-follow or mass-unfollow large numbers of accounts in a short time. Prefer careful, limited use on an account you can afford to risk.
+
+This project is vibe-coded open-source software shared for personal productivity and educational purposes—not enterprise-grade automation.
+
+
+═══════════════════════════════════════
+OPEN SOURCE & SUPPORT
+═══════════════════════════════════════
+
+Source code:
+https://github.com/omgitsjan/instagram-follow-checker
+
+If you find it useful, a star on GitHub is appreciated. Optional tips via PayPal:
+https://www.paypal.com/paypalme/IanPRTZ
+
+Issues and contributions are welcome on GitHub. Please do not request features designed for aggressive spam or bulk abuse.
+
+
+═══════════════════════════════════════
+LANGUAGES
+═══════════════════════════════════════
+
+• English (default)
+• Deutsch (switch in Settings)
+
+
+═══════════════════════════════════════
+SHORT SUMMARY
+═══════════════════════════════════════
+
+Instagram Follow Checker helps you understand your follow relationships in Chrome: who is mutual, who doesn’t follow back, and who you don’t follow yet—with optional follow/unfollow actions, search, and export. Local, open source, free. Use responsibly and at your own risk.

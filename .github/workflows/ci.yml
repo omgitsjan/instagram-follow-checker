@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate structure & manifest
+        run: node scripts/validate-extension.mjs
+
+      - name: Syntax-check JavaScript
+        run: |
+          node --check content.js
+          node --check popup.js
+          node --check i18n.js
+
+      - name: Package extension zip (artifact)
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          ZIP="instagram-follow-checker-v${VERSION}.zip"
+          zip -r "$ZIP" \
+            manifest.json \
+            content.js \
+            popup.html \
+            popup.js \
+            popup.css \
+            i18n.js \
+            icons \
+            LICENSE \
+            README.md
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+          ls -la "$ZIP"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-zip
+          path: instagram-follow-checker-v*.zip
+          if-no-files-found: error
+          retention-days: 14
