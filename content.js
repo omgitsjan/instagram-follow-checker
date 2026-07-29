@@ -152,6 +152,34 @@ async function fetchImageAsDataUrl(imageUrl) {
   }
 }
 
+async function getUserByUsername(username) {
+  const clean = String(username || "")
+    .trim()
+    .replace(/^@+/, "")
+    .replace(/\/$/, "");
+  if (!clean) throw new Error("Enter a username.");
+  if (!/^[A-Za-z0-9._]+$/.test(clean)) {
+    throw new Error("Invalid username.");
+  }
+  const data = await igFetch(
+    `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(clean)}`
+  );
+  const u = data?.data?.user;
+  if (!u?.id) {
+    throw new Error(`Could not find @${clean} (private, missing, or blocked).`);
+  }
+  return {
+    id: String(u.id),
+    username: u.username,
+    fullName: u.full_name || "",
+    profilePic: u.profile_pic_url || "",
+    followersCount: u.edge_followed_by?.count ?? null,
+    followingCount: u.edge_follow?.count ?? null,
+    isPrivate: Boolean(u.is_private),
+    isVerified: Boolean(u.is_verified),
+  };
+}
+
 async function getCurrentUser() {
   // 1) Cookie ds_user_id + Profil-Info
   const userId = getCookie("ds_user_id");
@@ -850,6 +878,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  if (msg?.type === "RESOLVE_USER") {
+    (async () => {
+      try {
+        const target = await getUserByUsername(msg.username || "");
+        sendResponse({ ok: true, user: target });
+      } catch (err) {
+        sendResponse({ ok: false, error: err?.message || String(err) });
+      }
+    })();
+    return true;
+  }
+
   if (msg?.type === "ANALYZE") {
     if (running) {
       sendResponse({ ok: false, error: "Analysis already running." });
@@ -859,34 +899,62 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     running = true;
     (async () => {
       try {
-        const me = await getCurrentUser();
+        const viewer = await getCurrentUser();
+        const impersonateName = (msg.targetUsername || "").replace(/^@/, "").trim();
+        const impersonating = Boolean(msg.impersonating && impersonateName);
+
+        let subject = viewer;
+        if (impersonating) {
+          chrome.runtime
+            .sendMessage({
+              type: "PROGRESS",
+              stage: "user",
+              me: viewer,
+              message: `Resolving @${impersonateName}…`,
+            })
+            .catch(() => {});
+          subject = await getUserByUsername(impersonateName);
+          if (subject.isPrivate) {
+            // Lists may still work if you follow them; warn via progress
+            chrome.runtime
+              .sendMessage({
+                type: "PROGRESS",
+                stage: "user",
+                me: subject,
+                message: `Private account @${subject.username} — lists only if you can view them.`,
+              })
+              .catch(() => {});
+          }
+        }
 
         chrome.runtime
           .sendMessage({
             type: "PROGRESS",
             stage: "user",
-            me,
+            me: subject,
+            viewer,
+            impersonating,
           })
           .catch(() => {});
 
-        const following = await fetchList(me.id, "following", (p) => {
+        const following = await fetchList(subject.id, "following", (p) => {
           chrome.runtime
             .sendMessage({
               type: "PROGRESS",
               stage: "following",
               loaded: p.loaded,
-              total: me.followingCount,
+              total: subject.followingCount,
             })
             .catch(() => {});
         });
 
-        const followers = await fetchList(me.id, "followers", (p) => {
+        const followers = await fetchList(subject.id, "followers", (p) => {
           chrome.runtime
             .sendMessage({
               type: "PROGRESS",
               stage: "followers",
               loaded: p.loaded,
-              total: me.followersCount,
+              total: subject.followersCount,
             })
             .catch(() => {});
         });
@@ -930,7 +998,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         const result = {
           type: "RESULT",
           ok: true,
-          me,
+          me: subject,
+          viewer,
+          impersonating,
+          readOnly: impersonating,
           counts: {
             following: following.length,
             followers: followers.length,

@@ -82,6 +82,27 @@
       </div>
 
       <div class="settings-block">
+        <label class="settings-label" data-i18n="impersonator">Impersonator</label>
+        <p class="settings-help" data-i18n="impersonatorHelp">
+          View another public account’s follow stats (read-only). Your login is still used for the session.
+        </p>
+        <label class="toggle-row">
+          <input type="checkbox" id="impersonatorToggle" />
+          <span data-i18n="impersonatorEnable">Enable Impersonator mode</span>
+        </label>
+        <input
+          id="impersonatorUsername"
+          type="text"
+          class="settings-input"
+          data-i18n-placeholder="impersonatorPlaceholder"
+          placeholder="@username"
+          autocomplete="off"
+          spellcheck="false"
+          disabled
+        />
+      </div>
+
+      <div class="settings-block">
         <a
           id="repoLink"
           class="settings-link"
@@ -114,12 +135,17 @@
       </div>
     </div>
 
+    <div id="impersonatorBanner" class="impersonator-banner hidden" role="status">
+      <strong data-i18n="impersonatorBannerTitle">Impersonator · read-only</strong>
+      <span id="impersonatorBannerUser"></span>
+    </div>
+
     <section class="controls" id="mainControls">
       <button id="startBtn" class="btn primary" type="button" data-i18n="startAnalysis">
         Start analysis
       </button>
       <p class="section-hint controls-hint" data-i18n="globalAnalysisHint">
-        One analysis fills Relationships, Analytics and Bots. Posts can load separately.
+        One analysis fills Relationships, Analytics and Bots. Posts &amp; Admire are coming soon.
       </p>
       <p id="status" class="status" role="status" data-i18n-html="statusIdle">
         Open <strong>instagram.com</strong> (logged in) and start the analysis.

@@ -44,7 +44,52 @@ const state = {
   analysisRuns: 0,
   postsLoads: 0,
   analysisRunning: false,
+  impersonating: false,
+  impersonatorUsername: "",
+  readOnly: false,
+  viewer: null,
 };
+
+const impersonatorToggle = $("impersonatorToggle");
+const impersonatorUsername = $("impersonatorUsername");
+const impersonatorBanner = $("impersonatorBanner");
+const impersonatorBannerUser = $("impersonatorBannerUser");
+
+function isReadOnly() {
+  return Boolean(state.readOnly || state.impersonating);
+}
+
+function updateImpersonatorUi() {
+  const on = Boolean(state.impersonating);
+  if (impersonatorToggle) impersonatorToggle.checked = on;
+  if (impersonatorUsername) {
+    impersonatorUsername.disabled = !on;
+    if (state.impersonatorUsername) {
+      impersonatorUsername.value = state.impersonatorUsername;
+    }
+  }
+  if (impersonatorBanner) {
+    show(impersonatorBanner, on);
+    if (impersonatorBannerUser) {
+      const name = state.me?.username || state.impersonatorUsername || "…";
+      impersonatorBannerUser.textContent = t("impersonatorBannerUser", {
+        user: name,
+      });
+    }
+  }
+  // Hide action-heavy bots tools label already; renderers check isReadOnly()
+}
+
+async function persistImpersonatorSettings() {
+  try {
+    await chrome.storage.local.set({
+      impersonating: state.impersonating,
+      impersonatorUsername: state.impersonatorUsername,
+    });
+  } catch {
+    /* ignore */
+  }
+}
 
 const BOT_SCORE_MIN = 25;
 const tipModal = $("tipModal");
@@ -472,32 +517,34 @@ function renderBots() {
     pill.textContent = t("botScore", { n: u.botScore });
     actions.appendChild(pill);
 
-    // Remove from your followers (they no longer follow you)
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.className = "btn action remove-follower";
-    removeBtn.textContent = t("removeFollower");
-    removeBtn.title = t("removeFollowerUser", { user: u.username });
-    removeBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      handleFriendship(u, "remove_follower", "bots", removeBtn, row);
-    });
-    actions.appendChild(removeBtn);
-
-    // Unfollow if you follow them
-    if (iFollow) {
-      const unf = document.createElement("button");
-      unf.type = "button";
-      unf.className = "btn action unfollow";
-      unf.textContent = t("unfollow");
-      unf.title = t("unfollowUser", { user: u.username });
-      unf.addEventListener("click", (e) => {
+    if (!isReadOnly()) {
+      // Remove from your followers (they no longer follow you)
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn action remove-follower";
+      removeBtn.textContent = t("removeFollower");
+      removeBtn.title = t("removeFollowerUser", { user: u.username });
+      removeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        handleFriendship(u, "unfollow", "bots", unf, row);
+        handleFriendship(u, "remove_follower", "bots", removeBtn, row);
       });
-      actions.appendChild(unf);
+      actions.appendChild(removeBtn);
+
+      // Unfollow if you follow them
+      if (iFollow) {
+        const unf = document.createElement("button");
+        unf.type = "button";
+        unf.className = "btn action unfollow";
+        unf.textContent = t("unfollow");
+        unf.title = t("unfollowUser", { user: u.username });
+        unf.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleFriendship(u, "unfollow", "bots", unf, row);
+        });
+        actions.appendChild(unf);
+      }
     }
 
     row.appendChild(actions);
@@ -702,10 +749,12 @@ function userCard(u, listKey) {
   }
 
   const canUnfollow =
-    listKey === "notBack" || listKey === "following" || listKey === "mutual";
+    !isReadOnly() &&
+    (listKey === "notBack" || listKey === "following" || listKey === "mutual");
   const canFollow =
-    listKey === "notMe" ||
-    (listKey === "followers" && !state.following.some((x) => x.id === u.id));
+    !isReadOnly() &&
+    (listKey === "notMe" ||
+      (listKey === "followers" && !state.following.some((x) => x.id === u.id)));
 
   if (canUnfollow) {
     const btn = document.createElement("button");
@@ -740,6 +789,10 @@ function userCard(u, listKey) {
 }
 
 async function handleFriendship(u, action, listKey, btn, row) {
+  if (isReadOnly()) {
+    setStatus(t("impersonatorReadOnly"), "error");
+    return;
+  }
   if (btn.disabled) return;
   const label = btn.textContent;
   btn.disabled = true;
@@ -1177,12 +1230,19 @@ function onResult(msg, { keepTab = false } = {}) {
   }
 
   state.me = msg.me;
+  state.viewer = msg.viewer || null;
+  state.readOnly = Boolean(msg.readOnly || msg.impersonating);
+  state.impersonating = Boolean(msg.impersonating);
+  if (msg.me?.username && state.impersonating) {
+    state.impersonatorUsername = msg.me.username;
+  }
   state.following = msg.following || [];
   state.followers = msg.followers || [];
   state.mutual = msg.mutual || [];
   state.notFollowingBack = msg.notFollowingBack || [];
   state.notFollowedByMe = msg.notFollowedByMe || [];
   state.counts = msg.counts;
+  updateImpersonatorUi();
 
   // Older cached results may lack full lists — rebuild when possible
   if (!state.following.length && state.mutual.length) {
@@ -1263,11 +1323,21 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 async function init() {
-  const stored = await chrome.storage.local.get(["lang", "lastResult", "lastLiked"]);
+  const stored = await chrome.storage.local.get([
+    "lang",
+    "lastResult",
+    "lastLiked",
+    "impersonating",
+    "impersonatorUsername",
+  ]);
   if (stored.lang && I18N[stored.lang]) {
     state.lang = stored.lang;
   }
+  state.impersonating = Boolean(stored.impersonating);
+  state.impersonatorUsername = stored.impersonatorUsername || "";
+  // Don't keep stale readOnly from old result if impersonator off
   applyStaticI18n();
+  updateImpersonatorUi();
   show(sectionNav, true);
 
   // Secret Admire: click logo 5 times quickly
@@ -1284,16 +1354,49 @@ async function init() {
   });
 
   if (stored.lastResult?.ok) {
-    onResult(stored.lastResult, { keepTab: true });
-    if (stored.lastResult.finishedAt) {
-      const agoMin = Math.round(
-        (Date.now() - stored.lastResult.finishedAt) / 60000
-      );
-      const ago =
-        agoMin > 0 ? t("lastResultAgo", { n: agoMin }) : "";
-      setStatus(t("lastResult", { ago }), "ok");
+    // Drop cached impersonation result if mode is off
+    if (stored.lastResult.impersonating && !state.impersonating) {
+      /* skip auto-load of foreign account snapshot */
+    } else {
+      onResult(stored.lastResult, { keepTab: true });
+      if (stored.lastResult.finishedAt) {
+        const agoMin = Math.round(
+          (Date.now() - stored.lastResult.finishedAt) / 60000
+        );
+        const ago =
+          agoMin > 0 ? t("lastResultAgo", { n: agoMin }) : "";
+        setStatus(t("lastResult", { ago }), "ok");
+      }
     }
   }
+
+  impersonatorToggle?.addEventListener("change", async () => {
+    state.impersonating = Boolean(impersonatorToggle.checked);
+    if (!state.impersonating) {
+      state.readOnly = false;
+      state.impersonatorUsername = "";
+      if (impersonatorUsername) impersonatorUsername.value = "";
+    } else {
+      state.impersonatorUsername = (impersonatorUsername?.value || "").replace(
+        /^@+/,
+        ""
+      );
+    }
+    await persistImpersonatorSettings();
+    updateImpersonatorUi();
+    setStatus(
+      state.impersonating ? t("impersonatorOn") : t("impersonatorOff"),
+      "ok"
+    );
+  });
+
+  impersonatorUsername?.addEventListener("change", async () => {
+    state.impersonatorUsername = (impersonatorUsername.value || "")
+      .trim()
+      .replace(/^@+/, "");
+    await persistImpersonatorSettings();
+    updateImpersonatorUi();
+  });
 
   loadHeaderAccount();
 }
@@ -1334,13 +1437,28 @@ async function runGlobalAnalysis() {
   closeSettings();
 
   try {
+    if (state.impersonating) {
+      const name = (impersonatorUsername?.value || state.impersonatorUsername || "")
+        .trim()
+        .replace(/^@+/, "");
+      if (!name) {
+        throw new Error(t("impersonatorNeedUser"));
+      }
+      state.impersonatorUsername = name;
+      await persistImpersonatorSettings();
+    }
+
     const tab = await getIgTab();
     // Force fresh content script so enrich + latest code is active
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       files: ["content.js"],
     });
-    const res = await chrome.tabs.sendMessage(tab.id, { type: "ANALYZE" });
+    const res = await chrome.tabs.sendMessage(tab.id, {
+      type: "ANALYZE",
+      impersonating: state.impersonating,
+      targetUsername: state.impersonating ? state.impersonatorUsername : null,
+    });
     if (!res?.started && res?.error) {
       throw new Error(res.error);
     }

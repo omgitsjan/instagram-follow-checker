@@ -132,6 +132,74 @@ body {
   letter-spacing: 0.04em;
 }
 
+.settings-help {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+  margin: 0 0 6px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.toggle-row input {
+  accent-color: var(--accent);
+}
+
+.settings-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 9px 10px;
+  font: inherit;
+  outline: none;
+}
+
+.settings-input:focus {
+  border-color: #6b4d7a;
+}
+
+.settings-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.impersonator-banner {
+  flex-shrink: 0;
+  margin: 0 10px 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 165, 36, 0.45);
+  background: rgba(245, 165, 36, 0.12);
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.impersonator-banner strong {
+  color: var(--warn);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.impersonator-banner.hidden {
+  display: none !important;
+}
+
 .lang-switch {
   display: grid;
   grid-template-columns: 1fr 1fr;
