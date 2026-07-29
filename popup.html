@@ -14,10 +14,12 @@
         </div>
         <div class="brand-text">
           <h1 data-i18n="appTitle">Follow Checker</h1>
-          <p class="subtitle account-line" id="accountLine" data-i18n="tagline">
-            No API · your session only
-          </p>
-          <span id="impersonatorChip" class="impersonator-chip hidden"></span>
+          <div class="account-row">
+            <p class="subtitle account-line" id="accountLine" data-i18n="tagline">
+              No API · your session only
+            </p>
+            <span id="impersonatorChip" class="impersonator-chip hidden"></span>
+          </div>
         </div>
       </div>
       <button
@@ -86,13 +88,9 @@
           <div class="settings-block">
             <label class="settings-label" data-i18n="impersonator">Impersonator</label>
             <p class="settings-help" data-i18n="impersonatorHelp">
-              View another public account’s follow stats (read-only). Your login is still used for the session.
+              Enter a public username and load their follow stats (read-only). No toggle — load to enter, disable to reset.
             </p>
-            <label class="toggle-row">
-              <input type="checkbox" id="impersonatorToggle" />
-              <span data-i18n="impersonatorEnable">Enable Impersonator mode</span>
-            </label>
-            <div id="impersonatorForm" class="impersonator-form hidden">
+            <div id="impersonatorForm" class="impersonator-form">
               <input
                 id="impersonatorUsername"
                 type="text"
@@ -109,6 +107,14 @@
                 data-i18n="impersonatorSubmit"
               >
                 Load account
+              </button>
+              <button
+                type="button"
+                id="impersonatorDisable"
+                class="btn ghost hidden"
+                data-i18n="impersonatorDisable"
+              >
+                Disable Impersonator
               </button>
               <p id="impersonatorStatus" class="impersonator-status" role="status"></p>
             </div>

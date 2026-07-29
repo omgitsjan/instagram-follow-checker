@@ -62,27 +62,39 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
+}
+
+.account-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .account-line {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .impersonator-chip {
   display: inline-flex;
-  align-self: flex-start;
-  max-width: 100%;
-  font-size: 10px;
+  flex-shrink: 0;
+  max-width: 55%;
+  font-size: 9px;
   font-weight: 700;
   color: #ffc857;
   background: rgba(245, 165, 36, 0.14);
   border: 1px solid rgba(245, 165, 36, 0.4);
   border-radius: 99px;
-  padding: 2px 8px;
-  line-height: 1.3;
+  padding: 2px 7px;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -152,32 +152,112 @@ async function fetchImageAsDataUrl(imageUrl) {
   }
 }
 
+function mapWebUser(u) {
+  if (!u) return null;
+  const id = u.id ?? u.pk ?? u.pk_id;
+  if (id == null && !u.username) return null;
+  return {
+    id: String(id ?? ""),
+    username: u.username || "",
+    fullName: u.full_name || "",
+    profilePic: u.profile_pic_url || u.profile_pic_url_hd || pickProfilePic(u) || "",
+    followersCount:
+      u.edge_followed_by?.count ?? u.follower_count ?? u.followers_count ?? null,
+    followingCount: u.edge_follow?.count ?? u.following_count ?? null,
+    isPrivate: Boolean(u.is_private),
+    isVerified: Boolean(u.is_verified),
+  };
+}
+
+/**
+ * Resolve public (or visible) username → user object.
+ * web_profile_info often 400s; topsearch is more reliable on web.
+ */
 async function getUserByUsername(username) {
   const clean = String(username || "")
     .trim()
     .replace(/^@+/, "")
-    .replace(/\/$/, "");
+    .replace(/\/+$/, "")
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .split(/[/?#]/)[0];
   if (!clean) throw new Error("Enter a username.");
   if (!/^[A-Za-z0-9._]+$/.test(clean)) {
     throw new Error("Invalid username.");
   }
-  const data = await igFetch(
-    `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(clean)}`
-  );
-  const u = data?.data?.user;
-  if (!u?.id) {
-    throw new Error(`Could not find @${clean} (private, missing, or blocked).`);
+
+  const errors = [];
+
+  // 1) Top search (usually works while logged in)
+  try {
+    const data = await igFetch(
+      `https://www.instagram.com/web/search/topsearch/?context=blended&query=${encodeURIComponent(clean)}&include_reel=false`
+    );
+    const users = data?.users || [];
+    const exact =
+      users.find(
+        (x) =>
+          String(x.user?.username || x.username || "").toLowerCase() ===
+          clean.toLowerCase()
+      ) || users[0];
+    const raw = exact?.user || exact;
+    const mapped = mapWebUser(raw);
+    if (mapped?.id && mapped.username) {
+      // Prefer exact username match only
+      if (mapped.username.toLowerCase() === clean.toLowerCase()) {
+        return mapped;
+      }
+      // If first result isn't exact, still accept exact from list
+      for (const row of users) {
+        const m = mapWebUser(row.user || row);
+        if (m?.username?.toLowerCase() === clean.toLowerCase() && m.id) {
+          return m;
+        }
+      }
+      errors.push("topsearch: no exact username match");
+    } else {
+      errors.push("topsearch: empty");
+    }
+  } catch (err) {
+    errors.push(`topsearch: ${err?.message || err}`);
   }
-  return {
-    id: String(u.id),
-    username: u.username,
-    fullName: u.full_name || "",
-    profilePic: u.profile_pic_url || "",
-    followersCount: u.edge_followed_by?.count ?? null,
-    followingCount: u.edge_follow?.count ?? null,
-    isPrivate: Boolean(u.is_private),
-    isVerified: Boolean(u.is_verified),
-  };
+
+  // 2) web_profile_info
+  try {
+    const data = await igFetch(
+      `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(clean)}`,
+      {
+        headers: {
+          Referer: `https://www.instagram.com/${encodeURIComponent(clean)}/`,
+        },
+      }
+    );
+    const mapped = mapWebUser(data?.data?.user);
+    if (mapped?.id) return mapped;
+    errors.push("web_profile_info: no user");
+  } catch (err) {
+    errors.push(`web_profile_info: ${err?.message || err}`);
+  }
+
+  // 3) Legacy search
+  try {
+    const data = await igFetch(
+      `https://www.instagram.com/api/v1/users/search/?q=${encodeURIComponent(clean)}&count=10`
+    );
+    const list = data?.users || [];
+    for (const raw of list) {
+      const mapped = mapWebUser(raw);
+      if (mapped?.username?.toLowerCase() === clean.toLowerCase() && mapped.id) {
+        return mapped;
+      }
+    }
+    errors.push("users/search: no exact match");
+  } catch (err) {
+    errors.push(`users/search: ${err?.message || err}`);
+  }
+
+  throw new Error(
+    `Could not load @${clean}. Stay logged in on instagram.com and use a public username. (${errors.slice(0, 2).join(" · ")})`
+  );
 }
 
 async function getCurrentUser() {
