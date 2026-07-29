@@ -338,15 +338,41 @@ function renderBots() {
   panel.appendChild(frag);
 }
 
+function renderPostsSummary() {
+  const el = $("postsSummary");
+  if (!el) return;
+  if (!state.liked.length) {
+    el.classList.add("hidden");
+    el.replaceChildren();
+    return;
+  }
+  const likes = state.liked.map((p) => p.likeCount).filter((n) => n != null);
+  const comments = state.liked.map((p) => p.commentCount).filter((n) => n != null);
+  const avg = (arr) =>
+    arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+  const fmt = window.IGAnalytics?.formatCount || ((n) => String(n ?? "—"));
+  const avgL = avg(likes);
+  const avgC = avg(comments);
+  const topL = likes.length ? Math.max(...likes) : null;
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="metric"><strong>${fmt(state.liked.length)}</strong><span>${escapeHtml(t("metricPostCount"))}</span></div>
+    <div class="metric"><strong>${avgL != null ? fmt(avgL) : "—"}</strong><span>${escapeHtml(t("metricAvgLikes"))}</span></div>
+    <div class="metric"><strong>${avgC != null ? fmt(avgC) : "—"}</strong><span>${escapeHtml(t("metricAvgComments"))}</span></div>
+    <div class="metric"><strong>${topL != null ? fmt(topL) : "—"}</strong><span>${escapeHtml(t("metricTopLikes"))}</span></div>
+  `;
+}
+
 function renderLiked() {
   const panel = $("panel-liked");
   if (!panel) return;
   panel.replaceChildren();
+  renderPostsSummary();
 
   if (!state.likedLoaded && !state.liked.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = t("likedHint");
+    empty.textContent = t("postsHint");
     panel.appendChild(empty);
     return;
   }
@@ -359,13 +385,19 @@ function renderLiked() {
     return;
   }
 
+  const fmt = window.IGAnalytics?.formatCount || ((n) => String(n ?? "—"));
   const frag = document.createDocumentFragment();
-  for (const post of state.liked) {
+  state.liked.forEach((post, i) => {
     const a = document.createElement("a");
     a.className = "liked-card";
     a.href = post.permalink || "#";
     a.target = "_blank";
     a.rel = "noopener noreferrer";
+
+    const idx = document.createElement("span");
+    idx.className = "rank-idx";
+    idx.textContent = String(i + 1);
+    a.appendChild(idx);
 
     if (post.thumb) {
       const img = document.createElement("img");
@@ -383,12 +415,20 @@ function renderLiked() {
 
     const meta = document.createElement("div");
     meta.className = "liked-meta";
-    const author = post.author?.username ? `@${post.author.username}` : "—";
-    const cap = (post.caption || "").slice(0, 120);
-    meta.innerHTML = `<div class="author">${escapeHtml(author)}</div><div class="caption">${escapeHtml(cap)}</div>`;
+    const cap = (post.caption || "").slice(0, 100);
+    const statsLine = [
+      post.likeCount != null ? t("postsLikes", { n: fmt(post.likeCount) }) : null,
+      post.commentCount != null
+        ? t("postsComments", { n: fmt(post.commentCount) })
+        : null,
+      post.playCount != null ? t("postsViews", { n: fmt(post.playCount) }) : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    meta.innerHTML = `<div class="author">${escapeHtml(statsLine || "—")}</div><div class="caption">${escapeHtml(cap || "(no caption)")}</div>`;
     a.appendChild(meta);
     frag.appendChild(a);
-  }
+  });
   panel.appendChild(frag);
 }
 
@@ -400,15 +440,19 @@ async function loadLikedPosts() {
     const tabId = await resolveIgTabId();
     if (!tabId) throw new Error(t("noIgTab"));
     await ensureContentScript(tabId);
+    // Own posts feed (liked endpoint often returns HTTP 400 on web)
     const res = await chrome.tabs.sendMessage(tabId, {
-      type: "FETCH_LIKED",
-      maxPages: 8,
+      type: "FETCH_OWN_POSTS",
+      mode: "own",
+      maxPages: 10,
     });
     if (!res?.ok) throw new Error(res?.error || t("actionFailed"));
-    state.liked = res.liked || [];
+    state.liked = res.posts || res.liked || [];
     state.likedLoaded = true;
     try {
-      await chrome.storage.local.set({ lastLiked: { liked: state.liked, finishedAt: Date.now() } });
+      await chrome.storage.local.set({
+        lastLiked: { liked: state.liked, mode: "own", finishedAt: Date.now() },
+      });
     } catch {
       /* ignore */
     }
@@ -1015,7 +1059,7 @@ function onProgress(msg) {
   if (msg.stage === "followers") {
     progressFill.style.width = "75%";
   }
-  if (msg.stage === "liked") {
+  if (msg.stage === "liked" || msg.stage === "posts") {
     progressFill.style.width = "50%";
     const text = t("progressLiked", { loaded: msg.loaded ?? 0 });
     progressText.textContent = text;

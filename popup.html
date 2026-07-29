@@ -138,8 +138,8 @@
       <button type="button" class="section-btn" data-section="bots" data-i18n="navBots">
         Bots
       </button>
-      <button type="button" class="section-btn" data-section="liked" data-i18n="navLiked">
-        Liked
+      <button type="button" class="section-btn" data-section="liked" data-i18n="navPosts">
+        Posts
       </button>
     </nav>
 
@@ -230,14 +230,15 @@
       </main>
     </div>
 
-    <!-- Liked posts section -->
+    <!-- Own posts insights section -->
     <div id="section-liked" class="section-body hidden">
-      <p class="section-hint" data-i18n="likedHint">
-        Posts you liked recently (from your Instagram session). Load may be rate-limited.
+      <p class="section-hint" data-i18n="postsHint">
+        Load your own posts and rank them by likes/comments (session-only).
       </p>
-      <button id="loadLikedBtn" class="btn primary" type="button" data-i18n="loadLiked">
-        Load liked posts
+      <button id="loadLikedBtn" class="btn primary" type="button" data-i18n="loadPosts">
+        Load my posts
       </button>
+      <div id="postsSummary" class="metric-grid hidden" style="margin-top: 8px"></div>
       <main class="panels panels-always">
         <section id="panel-liked" class="panel"></section>
       </main>

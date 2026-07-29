@@ -248,11 +248,19 @@ function mapUser(u) {
   };
 }
 
-function mapLikedItem(item) {
-  const user = item.user || item.owner || {};
+function shortCodeFromId(idOrCode) {
+  const s = String(idOrCode || "");
+  // Media pk often "123_456" — shortcode is separate `code` field when present
+  if (/^[A-Za-z0-9_-]+$/.test(s) && !s.includes("_")) return s;
+  return s.split("_")[0] || s;
+}
+
+function mapMediaItem(item, fallbackAuthor = null) {
+  const user = item.user || item.owner || fallbackAuthor || {};
+  const captionObj = item.caption;
   const caption =
-    item.caption?.text ||
-    item.caption ||
+    (typeof captionObj === "object" && captionObj?.text) ||
+    (typeof captionObj === "string" ? captionObj : "") ||
     item.accessibility_caption ||
     "";
   const thumb =
@@ -260,43 +268,144 @@ function mapLikedItem(item) {
     item.carousel_media?.[0]?.image_versions2?.candidates?.[0]?.url ||
     item.thumbnail_url ||
     "";
-  const code = item.code || item.pk || item.id || "";
+  const code = item.code || shortCodeFromId(item.pk ?? item.id ?? "");
   const id = String(item.pk ?? item.id ?? code);
+  const likeCount = item.like_count ?? item.like_and_view_counts_disabled ? null : item.like_count;
+  const commentCount = item.comment_count ?? null;
+  const playCount =
+    item.play_count ?? item.ig_play_count ?? item.view_count ?? item.video_view_count ?? null;
+
   return {
     id,
     code: String(code),
     caption: typeof caption === "string" ? caption : "",
     thumb: thumb.startsWith("//") ? `https:${thumb}` : thumb,
     takenAt: item.taken_at || item.device_timestamp || null,
-    likeCount: item.like_count ?? null,
+    likeCount: likeCount != null ? Number(likeCount) : null,
+    commentCount: commentCount != null ? Number(commentCount) : null,
+    playCount: playCount != null ? Number(playCount) : null,
+    mediaType: item.media_type ?? null, // 1 image, 2 video, 8 carousel
+    productType: item.product_type || "",
     author: {
       id: String(user.pk ?? user.id ?? ""),
       username: user.username || "",
       fullName: user.full_name || "",
       profilePic: pickProfilePic(user),
     },
-    permalink: user.username
-      ? `https://www.instagram.com/p/${encodeURIComponent(String(code).split("_")[0] || code)}/`
-      : `https://www.instagram.com/p/${encodeURIComponent(String(code))}/`,
+    permalink: `https://www.instagram.com/p/${encodeURIComponent(String(code))}/`,
   };
 }
 
-/** Paginated liked posts for the logged-in user */
-async function fetchLikedPosts(onProgress, { maxPages = 8 } = {}) {
+/**
+ * Your own posts (user media feed) — more reliable than /feed/liked/ which often 400s.
+ * GET /api/v1/feed/user/{user_id}/?count=12&max_id=...
+ */
+async function fetchOwnPosts(userId, onProgress, { maxPages = 10 } = {}) {
   const results = [];
   let maxId = null;
   let page = 0;
+  let meAuthor = null;
+
+  try {
+    const me = await getCurrentUser();
+    meAuthor = {
+      pk: me.id,
+      id: me.id,
+      username: me.username,
+      full_name: me.fullName,
+      profile_pic_url: me.profilePic,
+    };
+    if (!userId) userId = me.id;
+  } catch {
+    /* use passed userId */
+  }
+
+  if (!userId) {
+    throw new Error("Could not resolve your user id for posts.");
+  }
 
   do {
     page += 1;
-    let url = "https://www.instagram.com/api/v1/feed/liked/?";
-    if (maxId) url += `max_id=${encodeURIComponent(maxId)}`;
+    let url = `https://www.instagram.com/api/v1/feed/user/${encodeURIComponent(userId)}/?count=12`;
+    if (maxId) url += `&max_id=${encodeURIComponent(maxId)}`;
 
     const data = await igFetch(url);
+    const items = data.items || data.num_results ? data.items || [] : [];
+    const list = Array.isArray(items) ? items : [];
+    for (const raw of list) {
+      const media = raw.media || raw;
+      results.push(mapMediaItem(media, meAuthor));
+    }
+
+    if (onProgress) {
+      onProgress({
+        loaded: results.length,
+        page,
+        hasMore: Boolean(data.next_max_id || data.more_available),
+      });
+    }
+
+    maxId =
+      data.next_max_id ||
+      (data.more_available && list.length
+        ? String(list[list.length - 1].pk || list[list.length - 1].id || "")
+        : null);
+
+    if (!maxId || !data.more_available || page >= maxPages) break;
+    await sleep(DELAY_MS);
+  } while (maxId);
+
+  // Sort by engagement (likes + comments) for analysis
+  results.sort((a, b) => {
+    const ea = (a.likeCount || 0) + (a.commentCount || 0) * 3;
+    const eb = (b.likeCount || 0) + (b.commentCount || 0) * 3;
+    return eb - ea;
+  });
+
+  return results;
+}
+
+/**
+ * Posts you liked (optional). IG web often returns 400 — try multiple shapes.
+ */
+async function fetchLikedPosts(onProgress, { maxPages = 6 } = {}) {
+  const results = [];
+  let maxId = null;
+  let page = 0;
+  const bases = [
+    (id) =>
+      id
+        ? `https://www.instagram.com/api/v1/feed/liked/?max_id=${encodeURIComponent(id)}`
+        : `https://www.instagram.com/api/v1/feed/liked/`,
+    (id) =>
+      id
+        ? `https://www.instagram.com/api/v1/media/liked/?max_id=${encodeURIComponent(id)}`
+        : `https://www.instagram.com/api/v1/media/liked/`,
+  ];
+
+  let baseIdx = 0;
+  let lastErr = null;
+
+  do {
+    page += 1;
+    let data = null;
+    for (let i = baseIdx; i < bases.length; i++) {
+      try {
+        data = await igFetch(bases[i](maxId));
+        baseIdx = i;
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    if (!data) {
+      throw lastErr || new Error("Liked feed unavailable (HTTP error).");
+    }
+
     const items = data.items || data.media_items || [];
     for (const raw of items) {
-      const media = raw.media || raw;
-      results.push(mapLikedItem(media));
+      results.push(mapMediaItem(raw.media || raw));
     }
 
     if (onProgress) {
@@ -415,23 +524,40 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true; // async sendResponse
   }
 
-  if (msg?.type === "FETCH_LIKED") {
+  if (msg?.type === "FETCH_OWN_POSTS" || msg?.type === "FETCH_LIKED") {
+    // FETCH_LIKED kept as alias; default is own posts (liked endpoint often 400)
     (async () => {
       try {
-        const liked = await fetchLikedPosts(
-          (p) => {
-            chrome.runtime
-              .sendMessage({
-                type: "PROGRESS",
-                stage: "liked",
-                loaded: p.loaded,
-                page: p.page,
-              })
-              .catch(() => {});
-          },
-          { maxPages: msg.maxPages ?? 8 }
-        );
-        sendResponse({ ok: true, liked, finishedAt: Date.now() });
+        const mode = msg.mode === "liked" ? "liked" : "own";
+        const onProgress = (p) => {
+          chrome.runtime
+            .sendMessage({
+              type: "PROGRESS",
+              stage: "posts",
+              loaded: p.loaded,
+              page: p.page,
+            })
+            .catch(() => {});
+        };
+
+        let posts;
+        if (mode === "liked") {
+          posts = await fetchLikedPosts(onProgress, {
+            maxPages: msg.maxPages ?? 6,
+          });
+        } else {
+          const me = await getCurrentUser();
+          posts = await fetchOwnPosts(me.id, onProgress, {
+            maxPages: msg.maxPages ?? 10,
+          });
+        }
+        sendResponse({
+          ok: true,
+          posts,
+          liked: posts, // backward compat with older popup
+          mode,
+          finishedAt: Date.now(),
+        });
       } catch (err) {
         sendResponse({ ok: false, error: err?.message || String(err) });
       }
