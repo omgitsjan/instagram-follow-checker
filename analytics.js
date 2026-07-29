@@ -126,20 +126,18 @@ function buildAnalyticsSummary(state) {
   const withFollowing = following.filter((u) => num(u.followingCount) != null);
   const withRatio = following.filter((u) => ratioFollowingToFollowers(u) != null);
 
-  const topByFollowers = [...withFollowers]
-    .sort((a, b) => (num(b.followerCount) || 0) - (num(a.followerCount) || 0))
-    .slice(0, 25);
+  const topByFollowers = [...withFollowers].sort(
+    (a, b) => (num(b.followerCount) || 0) - (num(a.followerCount) || 0)
+  );
 
-  const topByFollowing = [...withFollowing]
-    .sort((a, b) => (num(b.followingCount) || 0) - (num(a.followingCount) || 0))
-    .slice(0, 25);
+  const topByFollowing = [...withFollowing].sort(
+    (a, b) => (num(b.followingCount) || 0) - (num(a.followingCount) || 0)
+  );
 
-  const worstRatio = [...withRatio]
-    .sort(
-      (a, b) =>
-        (ratioFollowingToFollowers(b) || 0) - (ratioFollowingToFollowers(a) || 0)
-    )
-    .slice(0, 25);
+  const worstRatio = [...withRatio].sort(
+    (a, b) =>
+      (ratioFollowingToFollowers(b) || 0) - (ratioFollowingToFollowers(a) || 0)
+  );
 
   const coverage = {
     followingWithFollowerCount: withFollowers.length,

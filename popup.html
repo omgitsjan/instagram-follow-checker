@@ -201,13 +201,49 @@
       </main>
     </div>
 
-    <!-- Analytics section -->
+    <!-- Analytics section (relationships-style: tiles → list + search/export) -->
     <div id="section-analytics" class="section-body hidden">
       <p class="section-hint" data-i18n="analyticsHint">
         Rankings use data from your last analysis. Some accounts lack count fields from Instagram.
       </p>
       <div id="analyticsSummary" class="metric-grid"></div>
-      <div id="analyticsRankings" class="rank-wrap"></div>
+      <nav id="analyticsTopics" class="tabs analytics-topics hidden" role="tablist" aria-label="Rankings">
+        <button type="button" class="tab active" data-analytics-topic="topFollowers" role="tab" aria-selected="true">
+          <span data-i18n="rankTopFollowersShort">Most followers</span>
+          <span class="badge" id="badgeTopFollowers">0</span>
+        </button>
+        <button type="button" class="tab" data-analytics-topic="topFollowing" role="tab" aria-selected="false">
+          <span data-i18n="rankTopFollowingShort">Most following</span>
+          <span class="badge info" id="badgeTopFollowing">0</span>
+        </button>
+        <button type="button" class="tab" data-analytics-topic="worstRatio" role="tab" aria-selected="false">
+          <span data-i18n="rankWorstRatioShort">Highest ratio</span>
+          <span class="badge warn" id="badgeWorstRatio">0</span>
+        </button>
+      </nav>
+      <div class="search-row hidden" id="analyticsSearchRow">
+        <input
+          id="analyticsSearchInput"
+          type="search"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Search username…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button
+          id="analyticsExportBtn"
+          class="btn ghost"
+          type="button"
+          data-i18n="export"
+          data-i18n-title="exportTitle"
+          title="Export as JSON"
+        >
+          Export
+        </button>
+      </div>
+      <main class="panels panels-always">
+        <section id="panel-analytics" class="panel"></section>
+      </main>
     </div>
 
     <!-- Bots section -->

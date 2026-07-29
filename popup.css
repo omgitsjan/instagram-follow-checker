@@ -357,11 +357,19 @@ h1 {
   letter-spacing: 0.03em;
 }
 
+.analytics-topics {
+  flex-shrink: 0;
+}
+
 .rank-wrap {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   padding: 0 10px 10px;
+}
+
+#panel-analytics .rank-idx {
+  margin-right: 2px;
 }
 
 .rank-block {
