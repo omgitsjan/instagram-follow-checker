@@ -118,6 +118,9 @@
       <button id="startBtn" class="btn primary" type="button" data-i18n="startAnalysis">
         Start analysis
       </button>
+      <p class="section-hint controls-hint" data-i18n="globalAnalysisHint">
+        One analysis fills Relationships, Analytics and Bots. Posts can load separately.
+      </p>
       <p id="status" class="status" role="status" data-i18n-html="statusIdle">
         Open <strong>instagram.com</strong> (logged in) and start the analysis.
       </p>
@@ -126,6 +129,31 @@
         <p id="progressText" class="progress-text"></p>
       </div>
     </section>
+
+    <!-- Tip / confirm popover -->
+    <div id="tipModal" class="tip-modal hidden" role="dialog" aria-modal="true" aria-labelledby="tipModalTitle">
+      <div class="tip-modal-card">
+        <h2 id="tipModalTitle" data-i18n="tipModalTitle">Quick note</h2>
+        <p id="tipModalBody" class="tip-modal-body" data-i18n-html="tipModalBody">
+          You’re running this again on your own responsibility. If the tool helps you, a small tip is appreciated ♥
+        </p>
+        <div class="tip-modal-actions">
+          <a
+            id="tipModalTip"
+            class="btn primary"
+            href="https://www.paypal.com/paypalme/IanPRTZ"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="tipMe"
+            >Tip me</a
+          >
+          <button type="button" id="tipModalContinue" class="btn ghost" data-i18n="tipModalContinue">
+            Continue anyway
+          </button>
+          <button type="button" id="tipModalCancel" class="btn ghost" data-i18n="close">Cancel</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Primary sections (v2) -->
     <nav id="sectionNav" class="section-nav hidden" role="tablist" aria-label="Sections">

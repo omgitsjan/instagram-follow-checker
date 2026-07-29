@@ -276,6 +276,60 @@ h1 {
   gap: 6px;
 }
 
+.controls-hint {
+  margin: 0;
+  padding: 0;
+}
+
+/* Tip / confirm modal */
+.tip-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.tip-modal.hidden {
+  display: none !important;
+}
+
+.tip-modal-card {
+  width: 100%;
+  max-width: 340px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.tip-modal-card h2 {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.tip-modal-body {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.tip-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tip-modal-actions .btn {
+  text-align: center;
+  text-decoration: none;
+}
+
 /* Primary section nav (v2) */
 .section-nav {
   flex-shrink: 0;

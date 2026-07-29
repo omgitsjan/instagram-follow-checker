@@ -337,6 +337,27 @@ function sortPostsByRecency(posts) {
   return [...posts].sort((a, b) => (b.takenAt || 0) - (a.takenAt || 0));
 }
 
+function mapGraphMediaNode(n, meAuthor) {
+  return mapMediaItem(
+    {
+      pk: n.id,
+      id: n.id,
+      code: n.shortcode,
+      caption: n.edge_media_to_caption?.edges?.[0]?.node?.text || n.caption || "",
+      taken_at: n.taken_at_timestamp || n.taken_at,
+      like_count: n.edge_liked_by?.count ?? n.edge_media_preview_like?.count,
+      comment_count: n.edge_media_to_comment?.count,
+      thumbnail_url: n.thumbnail_src || n.display_url,
+      image_versions2: n.display_url
+        ? { candidates: [{ url: n.display_url }] }
+        : undefined,
+      media_type: n.is_video ? 2 : 1,
+      user: meAuthor,
+    },
+    meAuthor
+  );
+}
+
 /** First page via web_profile_info (often works when feed/user fails). */
 async function fetchOwnPostsViaWebProfile(username, meAuthor) {
   if (!username) return [];
@@ -345,29 +366,38 @@ async function fetchOwnPostsViaWebProfile(username, meAuthor) {
   );
   const user = data?.data?.user;
   const edges = user?.edge_owner_to_timeline_media?.edges || [];
-  return edges.map((e) => {
-    const n = e.node || e;
-    // Normalize Graph-ish node → mapMediaItem-ish
-    const mapped = mapMediaItem(
-      {
-        pk: n.id,
-        id: n.id,
-        code: n.shortcode,
-        caption: n.edge_media_to_caption?.edges?.[0]?.node?.text || "",
-        taken_at: n.taken_at_timestamp,
-        like_count: n.edge_liked_by?.count ?? n.edge_media_preview_like?.count,
-        comment_count: n.edge_media_to_comment?.count,
-        thumbnail_url: n.thumbnail_src || n.display_url,
-        image_versions2: n.display_url
-          ? { candidates: [{ url: n.display_url }] }
-          : undefined,
-        media_type: n.is_video ? 2 : 1,
-        user: meAuthor,
-      },
-      meAuthor
-    );
-    return mapped;
-  });
+  return edges.map((e) => mapGraphMediaNode(e.node || e, meAuthor));
+}
+
+/** GraphQL user media (legacy query_hash still works for many sessions). */
+async function fetchOwnPostsViaGraphql(userId, meAuthor, onProgress, maxPages = 5) {
+  const results = [];
+  let after = null;
+  for (let page = 1; page <= maxPages; page++) {
+    const variables = { id: String(userId), first: 12, after };
+    const url =
+      "https://www.instagram.com/graphql/query/?query_hash=69cba40317214236af40e7efa697781d&variables=" +
+      encodeURIComponent(JSON.stringify(variables));
+    const data = await igFetch(url);
+    const conn = data?.data?.user?.edge_owner_to_timeline_media;
+    const edges = conn?.edges || [];
+    for (const e of edges) {
+      results.push(mapGraphMediaNode(e.node || e, meAuthor));
+    }
+    if (onProgress) {
+      onProgress({
+        phase: "posts",
+        loaded: results.length,
+        page,
+        hasMore: Boolean(conn?.page_info?.has_next_page),
+      });
+    }
+    if (!conn?.page_info?.has_next_page) break;
+    after = conn.page_info.end_cursor || null;
+    if (!after) break;
+    await sleep(DELAY_MS);
+  }
+  return results;
 }
 
 /**
@@ -404,8 +434,9 @@ async function fetchOwnPosts(userId, onProgress, { maxPages = 8 } = {}) {
     }
   };
 
+  const errors = [];
+
   // Strategy A: classic feed/user
-  let feedOk = false;
   try {
     let maxId = null;
     let page = 0;
@@ -416,7 +447,6 @@ async function fetchOwnPosts(userId, onProgress, { maxPages = 8 } = {}) {
       const data = await igFetch(url);
       const list = Array.isArray(data.items) ? data.items : [];
       pushAll(list.map((raw) => mapMediaItem(raw.media || raw, meAuthor)));
-      feedOk = true;
       if (onProgress) {
         onProgress({
           phase: "posts",
@@ -434,10 +464,13 @@ async function fetchOwnPosts(userId, onProgress, { maxPages = 8 } = {}) {
       await sleep(DELAY_MS);
     } while (maxId);
   } catch (err) {
-    // Strategy B: web_profile_info first page
+    errors.push(`feed/user: ${err?.message || err}`);
+  }
+
+  // Strategy B: web_profile_info
+  if (!results.length) {
     try {
-      const username = me?.username;
-      const viaProfile = await fetchOwnPostsViaWebProfile(username, meAuthor);
+      const viaProfile = await fetchOwnPostsViaWebProfile(me?.username, meAuthor);
       pushAll(viaProfile);
       if (onProgress) {
         onProgress({
@@ -445,18 +478,33 @@ async function fetchOwnPosts(userId, onProgress, { maxPages = 8 } = {}) {
           loaded: results.length,
           page: 1,
           hasMore: false,
-          note: "web_profile_fallback",
+          note: "web_profile",
         });
       }
-    } catch (err2) {
-      throw new Error(
-        `Could not load your posts. ${err?.message || err}. Fallback: ${err2?.message || err2}`
-      );
+    } catch (err) {
+      errors.push(`web_profile: ${err?.message || err}`);
     }
   }
 
-  if (!results.length && !feedOk) {
-    throw new Error("No posts found for your account.");
+  // Strategy C: GraphQL user media
+  if (!results.length && userId) {
+    try {
+      const viaGql = await fetchOwnPostsViaGraphql(
+        userId,
+        meAuthor,
+        onProgress,
+        Math.min(5, maxPages)
+      );
+      pushAll(viaGql);
+    } catch (err) {
+      errors.push(`graphql: ${err?.message || err}`);
+    }
+  }
+
+  if (!results.length) {
+    throw new Error(
+      `Could not load your posts. ${errors.join(" · ") || "Unknown error"}. Open your profile on Instagram and try again.`
+    );
   }
 
   return sortPostsByEngagement(results);
@@ -595,6 +643,48 @@ async function fetchList(userId, type, onProgress) {
   } while (maxId);
 
   return results;
+}
+
+/** Fill missing public counts (list API often omits them). Mutates users in place. */
+async function enrichUsersWithCounts(users, onProgress, { max = 80, delayMs = 650 } = {}) {
+  const targets = (users || []).filter(
+    (u) =>
+      u.id &&
+      (u.followerCount == null ||
+        u.followingCount == null ||
+        u.mediaCount == null)
+  );
+  const slice = targets.slice(0, max);
+  for (let i = 0; i < slice.length; i++) {
+    const u = slice[i];
+    try {
+      const data = await igFetch(
+        `https://www.instagram.com/api/v1/users/${encodeURIComponent(u.id)}/info/`
+      );
+      const info = data?.user;
+      if (info) {
+        if (info.follower_count != null) u.followerCount = Number(info.follower_count);
+        if (info.following_count != null) u.followingCount = Number(info.following_count);
+        if (info.media_count != null) u.mediaCount = Number(info.media_count);
+        if (info.is_private != null) u.isPrivate = Boolean(info.is_private);
+        if (info.is_verified != null) u.isVerified = Boolean(info.is_verified);
+        if (info.has_anonymous_profile_picture != null) {
+          u.hasAnonymousProfilePic = Boolean(info.has_anonymous_profile_picture);
+        }
+        if (!u.profilePic && info.profile_pic_url) {
+          u.profilePic = pickProfilePic(info);
+        }
+        if (!u.fullName && info.full_name) u.fullName = info.full_name;
+      }
+    } catch {
+      /* skip */
+    }
+    if (onProgress) {
+      onProgress({ enriched: i + 1, total: slice.length });
+    }
+    await sleep(delayMs);
+  }
+  return users;
 }
 
 function compareLists(following, followers) {
@@ -755,6 +845,38 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             })
             .catch(() => {});
         });
+
+        // List payloads often omit public counts → enrich for Analytics/Bots
+        await enrichUsersWithCounts(
+          following,
+          (p) => {
+            chrome.runtime
+              .sendMessage({
+                type: "PROGRESS",
+                stage: "enrich",
+                target: "following",
+                enriched: p.enriched,
+                total: p.total,
+              })
+              .catch(() => {});
+          },
+          { max: 100, delayMs: 600 }
+        );
+        await enrichUsersWithCounts(
+          followers,
+          (p) => {
+            chrome.runtime
+              .sendMessage({
+                type: "PROGRESS",
+                stage: "enrich",
+                target: "followers",
+                enriched: p.enriched,
+                total: p.total,
+              })
+              .catch(() => {});
+          },
+          { max: 80, delayMs: 600 }
+        );
 
         const lists = compareLists(following, followers);
         const result = {

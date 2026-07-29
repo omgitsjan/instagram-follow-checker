@@ -15,6 +15,16 @@ const I18N = {
     tipMeDesc: "Support via PayPal",
     close: "Close",
     startAnalysis: "Start analysis",
+    globalAnalysisHint:
+      "One analysis fills Relationships, Analytics and Bots. Posts load separately.",
+    doneGlobalHint: "Analytics & Bots are ready — switch sections above.",
+    progressEnrich: "Enriching {target}: {enriched}/{total} profiles…",
+    botsNoneAboveThreshold: "No followers with risk score ≥ 25. Looking good!",
+    tipModalTitle: "Quick note",
+    tipModalBody:
+      "You’re running this again on your own responsibility. If the tool helps you, a small tip is appreciated ♥",
+    tipModalContinue: "Continue anyway",
+    postsReloadHint: "Reload the Instagram tab, then try again.",
     statusIdle:
       "Open <strong>instagram.com</strong> (logged in) and start the analysis.",
     following: "Following",
@@ -128,6 +138,16 @@ const I18N = {
     tipMeDesc: "Support per PayPal",
     close: "Schließen",
     startAnalysis: "Analyse starten",
+    globalAnalysisHint:
+      "Eine Analyse füllt Beziehungen, Analytics und Bots. Posts separat laden.",
+    doneGlobalHint: "Analytics & Bots sind bereit — oben die Sections wechseln.",
+    progressEnrich: "Anreichern {target}: {enriched}/{total} Profile…",
+    botsNoneAboveThreshold: "Keine Follower mit Risiko-Score ≥ 25. Sieht gut aus!",
+    tipModalTitle: "Kurzer Hinweis",
+    tipModalBody:
+      "Du startest das erneut auf eigene Verantwortung. Wenn dir das Tool hilft, freue ich mich über ein kleines Trinkgeld ♥",
+    tipModalContinue: "Trotzdem fortfahren",
+    postsReloadHint: "Instagram-Tab neu laden und erneut versuchen.",
     statusIdle:
       "Öffne <strong>instagram.com</strong> (eingeloggt) und starte die Analyse.",
     following: "Following",

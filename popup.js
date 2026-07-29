@@ -41,7 +41,16 @@ const state = {
   lang: "en",
   statusIsIdle: true,
   likedLoaded: false,
+  analysisRuns: 0,
+  postsLoads: 0,
+  analysisRunning: false,
 };
+
+const BOT_SCORE_MIN = 25;
+const tipModal = $("tipModal");
+const tipModalContinue = $("tipModalContinue");
+const tipModalCancel = $("tipModalCancel");
+let tipModalResolver = null;
 
 const ALL_TABS = ["following", "followers", "mutual", "notBack", "notMe"];
 const SECTIONS = ["relationships", "analytics", "bots", "liked"];
@@ -366,7 +375,10 @@ function renderBots() {
     return;
   }
 
-  let list = window.IGAnalytics.sortByBotScoreDesc(state.followers);
+  // Hide low-risk accounts (score < 25) — most likely not bots
+  let list = window.IGAnalytics.sortByBotScoreDesc(state.followers).filter(
+    (u) => (u.botScore ?? 0) >= BOT_SCORE_MIN
+  );
   const q = state.botQuery.trim().toLowerCase();
   if (q) {
     list = list.filter(
@@ -379,7 +391,7 @@ function renderBots() {
   if (!list.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = t("noSearchResults");
+    empty.textContent = q ? t("noSearchResults") : t("botsNoneAboveThreshold");
     panel.appendChild(empty);
     return;
   }
@@ -707,6 +719,13 @@ function exportPostsList() {
 
 async function loadLikedPosts() {
   if (!loadLikedBtn) return;
+  if (loadLikedBtn.disabled) return;
+
+  if (state.postsLoads >= 1) {
+    const ok = await askTipConfirm();
+    if (!ok) return;
+  }
+
   loadLikedBtn.disabled = true;
   setStatus(t("loadingLiked"));
   show(progressWrap, true);
@@ -719,17 +738,27 @@ async function loadLikedPosts() {
       target: { tabId },
       files: ["content.js"],
     });
-    const res = await chrome.tabs.sendMessage(tabId, {
-      type: "ANALYZE_OWN_POSTS",
-      maxPages: 6,
-      maxPostsForLikers: 12,
-    });
-    if (!res?.ok) throw new Error(res?.error || t("actionFailed"));
+    let res;
+    try {
+      res = await chrome.tabs.sendMessage(tabId, {
+        type: "ANALYZE_OWN_POSTS",
+        maxPages: 6,
+        maxPostsForLikers: 12,
+      });
+    } catch (e) {
+      throw new Error(
+        `${t("actionFailed")}: ${e?.message || e}. ${t("postsReloadHint")}`
+      );
+    }
+    if (!res?.ok) {
+      throw new Error(res?.error || t("actionFailed"));
+    }
     state.liked = res.posts || res.liked || [];
     state.topFans = res.topFans || [];
     state.postsScannedForLikers = res.postsScannedForLikers || 0;
     if (res.me) state.me = { ...(state.me || {}), ...res.me };
     state.likedLoaded = true;
+    state.postsLoads += 1;
     try {
       await chrome.storage.local.set({
         lastLiked: {
@@ -1338,7 +1367,44 @@ function formatProgress(msg) {
       msg.total != null ? t("totalApprox", { n: msg.total }) : "";
     return t("progressFollowers", { loaded: msg.loaded ?? 0, total });
   }
+  if (msg.stage === "enrich") {
+    return t("progressEnrich", {
+      target: msg.target || "",
+      enriched: msg.enriched ?? 0,
+      total: msg.total ?? 0,
+    });
+  }
   return msg.message || t("loading");
+}
+
+/** Confirm re-run / second heavy action with tip popover */
+function askTipConfirm() {
+  return new Promise((resolve) => {
+    tipModalResolver = resolve;
+    if (!tipModal) {
+      resolve(true);
+      return;
+    }
+    // Refresh i18n inside modal
+    tipModal.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (key) el.textContent = t(key);
+    });
+    tipModal.querySelectorAll("[data-i18n-html]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-html");
+      if (key) el.innerHTML = t(key);
+    });
+    show(tipModal, true);
+  });
+}
+
+function closeTipModal(result) {
+  show(tipModal, false);
+  if (tipModalResolver) {
+    const r = tipModalResolver;
+    tipModalResolver = null;
+    r(result);
+  }
 }
 
 function onProgress(msg) {
@@ -1346,13 +1412,19 @@ function onProgress(msg) {
   if (msg.stage === "user" && msg.me) {
     state.me = msg.me;
     setHeaderAccount(msg.me);
-    progressFill.style.width = "10%";
+    progressFill.style.width = "8%";
   }
   if (msg.stage === "following") {
-    progressFill.style.width = "40%";
+    progressFill.style.width = "28%";
   }
   if (msg.stage === "followers") {
-    progressFill.style.width = "75%";
+    progressFill.style.width = "48%";
+  }
+  if (msg.stage === "enrich") {
+    const base = msg.target === "followers" ? 72 : 55;
+    const frac =
+      msg.total > 0 ? (msg.enriched || 0) / msg.total : 0;
+    progressFill.style.width = `${base + Math.round(frac * 12)}%`;
   }
   if (msg.stage === "liked" || msg.stage === "posts") {
     if (msg.phase === "likers") {
@@ -1379,6 +1451,7 @@ function onProgress(msg) {
 
 function onResult(msg, { keepTab = false } = {}) {
   startBtn.disabled = false;
+  state.analysisRunning = false;
   show(progressWrap, false);
 
   if (!msg.ok) {
@@ -1423,6 +1496,8 @@ function onResult(msg, { keepTab = false } = {}) {
   show(panels, true);
   show(sectionNav, true);
   renderAll();
+  // Always refresh derived sections from the same global result
+  state.analyticsCache = null;
   renderAnalytics();
   renderBots();
   if (!keepTab) switchTab("mutual");
@@ -1434,7 +1509,9 @@ function onResult(msg, { keepTab = false } = {}) {
       notBack: msg.counts.notFollowingBack,
       notMe: msg.counts.notFollowedByMe,
       mutual: msg.counts.mutual,
-    }),
+    }) +
+      " " +
+      t("doneGlobalHint"),
     "ok"
   );
 }
@@ -1514,7 +1591,19 @@ async function loadHeaderAccount() {
   }
 }
 
-startBtn.addEventListener("click", async () => {
+async function runGlobalAnalysis() {
+  if (state.analysisRunning) {
+    setStatus(t("analysisRunning"), "error");
+    return;
+  }
+
+  // Second+ run in this popup session → tip / own-risk popover
+  if (state.analysisRuns >= 1) {
+    const ok = await askTipConfirm();
+    if (!ok) return;
+  }
+
+  state.analysisRunning = true;
   startBtn.disabled = true;
   show(progressWrap, true);
   progressFill.style.width = "8%";
@@ -1524,17 +1613,33 @@ startBtn.addEventListener("click", async () => {
 
   try {
     const tab = await getIgTab();
-    await ensureContentScript(tab.id);
+    // Force fresh content script so enrich + latest code is active
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content.js"],
+    });
     const res = await chrome.tabs.sendMessage(tab.id, { type: "ANALYZE" });
     if (!res?.started && res?.error) {
       throw new Error(res.error);
     }
+    state.analysisRuns += 1;
     progressText.textContent = t("loadingLists");
   } catch (err) {
+    state.analysisRunning = false;
     startBtn.disabled = false;
     show(progressWrap, false);
     setStatus(err?.message || String(err), "error");
   }
+}
+
+startBtn.addEventListener("click", () => {
+  runGlobalAnalysis();
+});
+
+tipModalContinue?.addEventListener("click", () => closeTipModal(true));
+tipModalCancel?.addEventListener("click", () => closeTipModal(false));
+tipModal?.addEventListener("click", (e) => {
+  if (e.target === tipModal) closeTipModal(false);
 });
 
 document.querySelectorAll("#tabs .tab").forEach((btn) => {
