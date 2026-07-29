@@ -54,30 +54,57 @@ const impersonatorToggle = $("impersonatorToggle");
 const impersonatorUsername = $("impersonatorUsername");
 const impersonatorBanner = $("impersonatorBanner");
 const impersonatorBannerUser = $("impersonatorBannerUser");
+const impersonatorForm = $("impersonatorForm");
+const impersonatorSubmit = $("impersonatorSubmit");
+const impersonatorStatus = $("impersonatorStatus");
+const impersonatorChip = $("impersonatorChip");
+const mainControls = $("mainControls");
 
 function isReadOnly() {
   return Boolean(state.readOnly || state.impersonating);
 }
 
+function setImpersonatorStatus(text, kind = "") {
+  if (!impersonatorStatus) return;
+  impersonatorStatus.textContent = text || "";
+  impersonatorStatus.className =
+    "impersonator-status" + (kind ? ` ${kind}` : "");
+}
+
 function updateImpersonatorUi() {
   const on = Boolean(state.impersonating);
   if (impersonatorToggle) impersonatorToggle.checked = on;
+  if (impersonatorForm) {
+    impersonatorForm.classList.toggle("hidden", !on);
+  }
   if (impersonatorUsername) {
     impersonatorUsername.disabled = !on;
-    if (state.impersonatorUsername) {
+    if (state.impersonatorUsername && !impersonatorUsername.value) {
       impersonatorUsername.value = state.impersonatorUsername;
     }
   }
+  if (impersonatorSubmit) {
+    impersonatorSubmit.disabled = !on || state.analysisRunning;
+  }
+  // Hide main Start analysis while Impersonator mode is on (load via Settings submit)
+  if (startBtn) {
+    startBtn.classList.toggle("hidden", on);
+  }
+  if (mainControls) {
+    // keep status/progress visible; only primary start is hidden
+  }
   if (impersonatorBanner) {
+    const activeTarget = state.readOnly && state.me?.username;
     show(impersonatorBanner, on);
     if (impersonatorBannerUser) {
-      const name = state.me?.username || state.impersonatorUsername || "…";
+      const name =
+        activeTarget || state.impersonatorUsername || "…";
       impersonatorBannerUser.textContent = t("impersonatorBannerUser", {
         user: name,
       });
     }
   }
-  // Hide action-heavy bots tools label already; renderers check isReadOnly()
+  refreshHeaderDisplay();
 }
 
 async function persistImpersonatorSettings() {
@@ -572,40 +599,31 @@ function setHeaderLogoFallback() {
   headerLogo.innerHTML = '<span class="logo-fallback">IG</span>';
 }
 
-function setHeaderAccount(me) {
-  if (!me?.username) {
-    accountLine.textContent = t("tagline");
-    setHeaderLogoFallback();
-    return;
-  }
-
-  accountLine.textContent = `@${me.username}`;
+function setHeaderPhoto(person) {
   if (!headerLogo) return;
-
-  const pic = me.profilePicData || me.profilePic;
-  if (!pic) {
+  if (!person?.profilePic && !person?.profilePicData) {
     setHeaderLogoFallback();
     return;
   }
-
+  const pic = person.profilePicData || person.profilePic;
   const img = document.createElement("img");
   img.className = "logo-photo";
-  img.alt = `@${me.username}`;
+  img.alt = person.username ? `@${person.username}` : "";
   img.src = pic;
   img.addEventListener(
     "error",
     async () => {
-      if (me.profilePic && !me.profilePicData) {
+      if (person.profilePic && !person.profilePicData) {
         try {
           const tabId = await resolveIgTabId();
           if (tabId) {
             await ensureContentScript(tabId);
             const res = await chrome.tabs.sendMessage(tabId, {
               type: "FETCH_AVATAR",
-              url: me.profilePic,
+              url: person.profilePic,
             });
             if (res?.ok && res.dataUrl) {
-              me.profilePicData = res.dataUrl;
+              person.profilePicData = res.dataUrl;
               img.src = res.dataUrl;
               return;
             }
@@ -626,9 +644,69 @@ function setHeaderAccount(me) {
     },
     { once: true }
   );
-
   headerLogo.classList.add("has-photo");
   headerLogo.replaceChildren(img);
+}
+
+/**
+ * Header rules:
+ * - Normal: your @username + your PB
+ * - Impersonator active (after load): keep YOUR name line, chip (@target · Impersonator), PB = target
+ */
+function refreshHeaderDisplay() {
+  const chip = impersonatorChip;
+  const viewer = state.viewer;
+  const target = state.me;
+  const on = isReadOnly() && (target?.username || state.impersonatorUsername);
+
+  if (on) {
+    const selfName = viewer?.username
+      ? `@${viewer.username}`
+      : t("impersonatorYou");
+    accountLine.removeAttribute("data-i18n");
+    accountLine.textContent = selfName;
+    if (chip) {
+      const tName = target?.username || state.impersonatorUsername || "…";
+      chip.textContent = t("impersonatorChip", { user: tName });
+      chip.classList.remove("hidden");
+    }
+    // Profile picture = impersonated account
+    setHeaderPhoto(target?.username ? target : { username: state.impersonatorUsername });
+    return;
+  }
+
+  if (chip) {
+    chip.classList.add("hidden");
+    chip.textContent = "";
+  }
+
+  if (target?.username && !state.impersonating) {
+    accountLine.removeAttribute("data-i18n");
+    accountLine.textContent = `@${target.username}`;
+    setHeaderPhoto(target);
+    return;
+  }
+
+  if (viewer?.username) {
+    accountLine.removeAttribute("data-i18n");
+    accountLine.textContent = `@${viewer.username}`;
+    setHeaderPhoto(viewer);
+    return;
+  }
+
+  accountLine.setAttribute("data-i18n", "tagline");
+  accountLine.textContent = t("tagline");
+  setHeaderLogoFallback();
+}
+
+function setHeaderAccount(me) {
+  // Compatibility: treat as analysis subject; keep viewer separate
+  if (me?.username) {
+    if (!state.impersonating && !state.readOnly) {
+      state.viewer = state.viewer || me;
+    }
+  }
+  refreshHeaderDisplay();
 }
 
 function setStatus(text, kind = "") {
@@ -1221,18 +1299,20 @@ function onProgress(msg) {
 
 function onResult(msg, { keepTab = false } = {}) {
   startBtn.disabled = false;
+  if (impersonatorSubmit) impersonatorSubmit.disabled = false;
   state.analysisRunning = false;
   show(progressWrap, false);
 
   if (!msg.ok) {
     setStatus(escapeHtml(msg.error || t("unknownError")), "error");
+    setImpersonatorStatus(msg.error || t("unknownError"), "error");
     return;
   }
 
   state.me = msg.me;
-  state.viewer = msg.viewer || null;
+  state.viewer = msg.viewer || state.viewer || null;
   state.readOnly = Boolean(msg.readOnly || msg.impersonating);
-  state.impersonating = Boolean(msg.impersonating);
+  if (msg.impersonating) state.impersonating = true;
   if (msg.me?.username && state.impersonating) {
     state.impersonatorUsername = msg.me.username;
   }
@@ -1264,7 +1344,8 @@ function onResult(msg, { keepTab = false } = {}) {
     state.counts.followers = state.followers.length || state.counts.followers;
   }
 
-  setHeaderAccount(msg.me);
+  updateImpersonatorUi();
+  refreshHeaderDisplay();
   updateBadgesAndStats();
 
   show(stats, true);
@@ -1281,16 +1362,21 @@ function onResult(msg, { keepTab = false } = {}) {
   else switchTab(state.activeTab || "mutual", { force: true });
   switchSection(state.activeSection || "relationships");
 
-  setStatus(
+  const done =
     t("doneSummary", {
       notBack: msg.counts.notFollowingBack,
       notMe: msg.counts.notFollowedByMe,
       mutual: msg.counts.mutual,
     }) +
-      " " +
-      t("doneGlobalHint"),
-    "ok"
-  );
+    " " +
+    t("doneGlobalHint");
+  setStatus(done, "ok");
+  if (state.impersonating) {
+    setImpersonatorStatus(
+      t("impersonatorDone", { user: msg.me?.username || state.impersonatorUsername }),
+      "ok"
+    );
+  }
 }
 
 /* ---------- settings ---------- */
@@ -1376,11 +1462,17 @@ async function init() {
       state.readOnly = false;
       state.impersonatorUsername = "";
       if (impersonatorUsername) impersonatorUsername.value = "";
+      setImpersonatorStatus("");
+      // Restore own header if we have viewer
+      if (state.viewer) {
+        state.me = state.viewer;
+      }
     } else {
       state.impersonatorUsername = (impersonatorUsername?.value || "").replace(
         /^@+/,
         ""
       );
+      setImpersonatorStatus(t("impersonatorOn"), "ok");
     }
     await persistImpersonatorSettings();
     updateImpersonatorUi();
@@ -1388,14 +1480,6 @@ async function init() {
       state.impersonating ? t("impersonatorOn") : t("impersonatorOff"),
       "ok"
     );
-  });
-
-  impersonatorUsername?.addEventListener("change", async () => {
-    state.impersonatorUsername = (impersonatorUsername.value || "")
-      .trim()
-      .replace(/^@+/, "");
-    await persistImpersonatorSettings();
-    updateImpersonatorUi();
   });
 
   loadHeaderAccount();
@@ -1408,15 +1492,19 @@ async function loadHeaderAccount() {
     await ensureContentScript(tabId);
     const res = await chrome.tabs.sendMessage(tabId, { type: "GET_ME" });
     if (res?.ok && res.me) {
-      state.me = { ...(state.me || {}), ...res.me };
-      setHeaderAccount(state.me);
+      state.viewer = { ...(state.viewer || {}), ...res.me };
+      // Only overwrite subject if not in active impersonation view
+      if (!state.readOnly) {
+        state.me = { ...(state.me || {}), ...res.me };
+      }
+      refreshHeaderDisplay();
     }
   } catch {
     /* no IG tab */
   }
 }
 
-async function runGlobalAnalysis() {
+async function runGlobalAnalysis({ fromImpersonatorSubmit = false } = {}) {
   if (state.analysisRunning) {
     setStatus(t("analysisRunning"), "error");
     return;
@@ -1430,11 +1518,12 @@ async function runGlobalAnalysis() {
 
   state.analysisRunning = true;
   startBtn.disabled = true;
+  if (impersonatorSubmit) impersonatorSubmit.disabled = true;
   show(progressWrap, true);
   progressFill.style.width = "8%";
   progressText.textContent = t("connecting");
   setStatus(t("starting"));
-  closeSettings();
+  if (!fromImpersonatorSubmit) closeSettings();
 
   try {
     if (state.impersonating) {
@@ -1464,16 +1553,90 @@ async function runGlobalAnalysis() {
     }
     state.analysisRuns += 1;
     progressText.textContent = t("loadingLists");
+    if (fromImpersonatorSubmit) {
+      setImpersonatorStatus(t("impersonatorStarted"), "loading");
+      closeSettings();
+    }
   } catch (err) {
     state.analysisRunning = false;
     startBtn.disabled = false;
+    if (impersonatorSubmit) impersonatorSubmit.disabled = false;
     show(progressWrap, false);
     setStatus(err?.message || String(err), "error");
+    if (fromImpersonatorSubmit) {
+      setImpersonatorStatus(err?.message || String(err), "error");
+    }
+  }
+}
+
+/** Resolve username then auto-start read-only analysis */
+async function submitImpersonator() {
+  if (!state.impersonating) {
+    setImpersonatorStatus(t("impersonatorEnableFirst"), "error");
+    return;
+  }
+  const name = (impersonatorUsername?.value || "")
+    .trim()
+    .replace(/^@+/, "");
+  if (!name) {
+    setImpersonatorStatus(t("impersonatorNeedUser"), "error");
+    return;
+  }
+
+  state.impersonatorUsername = name;
+  await persistImpersonatorSettings();
+  setImpersonatorStatus(t("impersonatorResolving", { user: name }), "loading");
+  if (impersonatorSubmit) impersonatorSubmit.disabled = true;
+
+  try {
+    const tab = await getIgTab();
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content.js"],
+    });
+    const res = await chrome.tabs.sendMessage(tab.id, {
+      type: "RESOLVE_USER",
+      username: name,
+    });
+    if (!res?.ok || !res.user) {
+      throw new Error(res?.error || t("impersonatorNotFound", { user: name }));
+    }
+
+    // Prefill target in state for header PB before full analysis finishes
+    state.me = res.user;
+    state.readOnly = true;
+    setImpersonatorStatus(
+      t("impersonatorResolved", { user: res.user.username }),
+      "ok"
+    );
+    updateImpersonatorUi();
+    refreshHeaderDisplay();
+
+    // Auto-start full analysis
+    await runGlobalAnalysis({ fromImpersonatorSubmit: true });
+  } catch (err) {
+    setImpersonatorStatus(err?.message || String(err), "error");
+    setStatus(err?.message || String(err), "error");
+    if (impersonatorSubmit) impersonatorSubmit.disabled = false;
   }
 }
 
 startBtn.addEventListener("click", () => {
+  // Only for normal (own account) mode
+  if (state.impersonating) {
+    setStatus(t("impersonatorUseSubmit"), "error");
+    openSettings();
+    return;
+  }
   runGlobalAnalysis();
+});
+
+impersonatorSubmit?.addEventListener("click", () => submitImpersonator());
+impersonatorUsername?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    submitImpersonator();
+  }
 });
 
 tipModalContinue?.addEventListener("click", () => closeTipModal(true));

@@ -60,6 +60,66 @@ body {
 
 .brand-text {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.account-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.impersonator-chip {
+  display: inline-flex;
+  align-self: flex-start;
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffc857;
+  background: rgba(245, 165, 36, 0.14);
+  border: 1px solid rgba(245, 165, 36, 0.4);
+  border-radius: 99px;
+  padding: 2px 8px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.impersonator-chip.hidden {
+  display: none !important;
+}
+
+.impersonator-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.impersonator-form.hidden {
+  display: none !important;
+}
+
+.impersonator-status {
+  font-size: 11px;
+  line-height: 1.35;
+  min-height: 1.2em;
+  color: var(--muted);
+  margin: 0;
+}
+
+.impersonator-status.ok {
+  color: var(--ok);
+}
+
+.impersonator-status.error {
+  color: #ff7b7b;
+}
+
+.impersonator-status.loading {
+  color: var(--info);
 }
 
 .btn.icon-btn {

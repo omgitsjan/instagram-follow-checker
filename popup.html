@@ -90,16 +90,26 @@
           <input type="checkbox" id="impersonatorToggle" />
           <span data-i18n="impersonatorEnable">Enable Impersonator mode</span>
         </label>
-        <input
-          id="impersonatorUsername"
-          type="text"
-          class="settings-input"
-          data-i18n-placeholder="impersonatorPlaceholder"
-          placeholder="@username"
-          autocomplete="off"
-          spellcheck="false"
-          disabled
-        />
+        <div id="impersonatorForm" class="impersonator-form hidden">
+          <input
+            id="impersonatorUsername"
+            type="text"
+            class="settings-input"
+            data-i18n-placeholder="impersonatorPlaceholder"
+            placeholder="@username"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button
+            type="button"
+            id="impersonatorSubmit"
+            class="btn primary"
+            data-i18n="impersonatorSubmit"
+          >
+            Load account
+          </button>
+          <p id="impersonatorStatus" class="impersonator-status" role="status"></p>
+        </div>
       </div>
 
       <div class="settings-block">
