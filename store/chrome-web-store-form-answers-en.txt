@@ -1,0 +1,62 @@
+Chrome Web Store – form answers (EN)
+====================================
+Each free-text field max 1000 characters. Privacy URL max 2048.
+
+
+1) Single purpose description
+-----------------------------
+This extension has a single purpose: help users review Instagram follow relationships in the browser. It compares the logged-in user's following and followers lists and shows mutual follows, accounts that do not follow back, and followers the user does not follow, plus full following/followers lists. Users may optionally follow or unfollow from those results. It does not provide any unrelated features (no feed reader, ads, or analytics product).
+
+(~420 chars)
+
+
+2) Justification for activeTab
+------------------------------
+activeTab is used so the extension can message the currently open Instagram tab when the user starts an analysis or triggers follow/unfollow. This targets the existing Instagram page context with the user's login session instead of controlling unrelated sites. Without tab interaction, the extension cannot load relationship lists in the user's session.
+
+(~350 chars)
+
+
+3) Justification for scripting
+------------------------------
+scripting is required to inject or ensure the content script on instagram.com when needed (for example if Instagram was already open before install). The script only loads follow relationships via the web session and performs follow/unfollow actions the user explicitly starts. It is not used on other sites or for background tracking.
+
+(~340 chars)
+
+
+4) Justification for storage
+----------------------------
+storage (chrome.storage.local) keeps only on-device preferences and cache: UI language (EN/DE) and optionally the last analysis result so the popup can show it again after closing. Data is not uploaded to developer servers. Without storage, language and last results would reset every time.
+
+(~300 chars)
+
+
+5) Justification for host permission
+------------------------------------
+Host access to https://www.instagram.com/* (and related image CDNs) is required to load following/followers lists with the logged-in Instagram web session and to display profile pictures. Content scripts and requests are limited to this Instagram use case; the extension does not request broad access to arbitrary websites. Without Instagram host access the single purpose cannot work.
+
+(~380 chars)
+
+
+6) Remote code
+--------------
+Select: No, I am not using Remote Code.
+
+
+7) Data usage checkboxes
+------------------------
+Check only:
+
+[x] Website content
+
+Leave others unchecked (PII-as-collected-by-us, health, financial, auth secrets, personal communications, location, web history logging, user-activity analytics).
+
+
+8) Certifications
+-----------------
+Confirm all three statements.
+
+
+9) Privacy policy URL
+---------------------
+https://github.com/omgitsjan/instagram-follow-checker/blob/main/PRIVACY.md

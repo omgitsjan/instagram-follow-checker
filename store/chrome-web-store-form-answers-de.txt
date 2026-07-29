@@ -1,0 +1,95 @@
+Chrome Web Store – Formularantworten (DE)
+========================================
+Zeichenlimits beachten (jeweils max. 1000, URL max. 2048).
+Texte unten sind bewusst kurz und copy-paste-fertig.
+
+
+1) Alleiniger Zweck – Beschreibung
+----------------------------------
+Die Erweiterung hat genau einen Zweck: Instagram-Follow-Beziehungen des eingeloggten Nutzers im Browser anzeigen und auswerten. Sie vergleicht die Following- und Follower-Listen und zeigt drei Gruppen (gegenseitig, folgt nicht zurück, ich folge nicht) sowie die vollen Listen. Optional kann der Nutzer aus der Ansicht heraus folgen oder entfolgen. Es gibt keine anderen Funktionen (kein Feed, keine Werbung, kein Tracking).
+
+(Zeichen ca.: 480)
+
+
+2) Begründung für activeTab
+---------------------------
+activeTab wird benötigt, damit die Erweiterung mit dem aktiven Instagram-Tab kommunizieren kann, wenn der Nutzer die Analyse startet oder Follow/Unfollow ausführt. So wird der Content-Script-Kontext der geöffneten Instagram-Seite angesprochen, ohne dauerhaft unnötig andere Websites zu steuern. Ohne diese Interaktion mit dem aktuellen Tab kann die Erweiterung die Listen nicht im Kontext der bestehenden Login-Session laden.
+
+(Zeichen ca.: 430)
+
+
+3) Begründung für scripting
+---------------------------
+scripting wird benötigt, um das Content Script auf instagram.com bei Bedarf zu injizieren bzw. sicherzustellen, dass es geladen ist (z. B. wenn die Seite schon offen war, bevor die Erweiterung installiert wurde). Das Script liest die Follow-Beziehungen über die Web-Session und führt nur die vom Nutzer ausgelösten Follow-/Unfollow-Aktionen aus. Es wird nicht für fremde Websites oder Hintergrund-Tracking verwendet.
+
+(Zeichen ca.: 420)
+
+
+4) Begründung für storage
+-------------------------
+storage (chrome.storage.local) speichert ausschließlich lokale Einstellungen und Cache auf dem Gerät des Nutzers: die gewählte UI-Sprache (EN/DE) und optional das letzte Analyseergebnis, damit es nach dem Schließen des Popups wieder angezeigt werden kann. Es werden keine Daten an Server des Entwicklers übertragen. Ohne storage müssten Sprache und Ergebnis bei jedem Öffnen neu gesetzt bzw. neu geladen werden.
+
+(Zeichen ca.: 410)
+
+
+5) Begründung für Hostberechtigung
+----------------------------------
+Die Host-Berechtigungen für https://www.instagram.com/* (und zugehörige Bild-CDNs) sind erforderlich, weil die Erweiterung nur dort die Following-/Follower-Listen im Kontext der bereits eingeloggten Web-Session laden und Profilbilder anzeigen kann. Content Scripts und Requests laufen ausschließlich für diesen Instagram-Zweck. Es wird kein allgemeiner Zugriff auf beliebige Websites angefordert. Ohne Host-Zugriff auf Instagram ist der alleinige Zweck nicht erfüllbar.
+
+(Zeichen ca.: 470)
+
+
+6) Remote Code?
+---------------
+Antwort: Nein, ich verwende "Remote Code" nicht.
+
+(Kein Begründungstext nötig, wenn „Nein“ gewählt ist.
+Falls das Formular trotzdem ein Feld zeigt, optional:)
+
+Die Erweiterung führt keinen entfernten JS-/Wasm-Code aus. Alle Skripte (popup, content, i18n) liegen im Erweiterungspaket. Es gibt keine externen <script>-Quellen und kein eval von Remote-Strings.
+
+
+7) Datennutzung – welche Nutzerdaten?
+-------------------------------------
+Ankreuzen (empfohlen, ehrlich für diese Extension):
+
+[ ] Personenidentifizierbare Informationen   → NEIN (nicht als separate Erhebung an uns)
+[ ] Gesundheitsinformationen                 → NEIN
+[ ] Finanzdaten und Zahlungsinformationen    → NEIN
+[ ] Authentifizierungsdaten                  → NEIN (kein Passwort-Feld der Extension)
+[ ] Persönliche Kommunikation                → NEIN
+[ ] Ort                                      → NEIN
+[ ] Webprotokoll                             → NEIN (kein allgemeines Browsing-History-Logging)
+[ ] Nutzeraktivität                          → NEIN (kein Klick-/Scroll-Tracking zu Analytics)
+[x] Websitecontent                           → JA
+
+Begründung Websitecontent (für dich / falls nachgefragt):
+Die Erweiterung verarbeitet Inhalte der Instagram-Website bzw. der Instagram-Web-API im Browser (Benutzernamen, Anzeigenamen, Profilbild-URLs, Follow-Beziehungen), um die Listen anzuzeigen. Verarbeitung und optionale lokale Speicherung erfolgen nur auf dem Gerät; keine Übermittlung an Server des Entwicklers.
+
+
+8) Bestätigungen
+----------------
+Alle drei Häkchen setzen:
+
+[x] Ich verkaufe oder übertrage keine Nutzerdaten an Dritte, außer in den genehmigten Anwendungsfällen
+[x] Nutzerdaten werden nicht aus Gründen, die nichts mit dem alleinigen Zweck des Artikels zu tun haben, verwendet oder übertragen
+[x] Nutzerdaten werden nicht zur Ermittlung der Kreditwürdigkeit oder für Darlehenszwecke verwendet oder übertragen
+
+
+9) URL der Datenschutzerklärung
+-------------------------------
+https://github.com/omgitsjan/instagram-follow-checker/blob/main/PRIVACY.md
+
+(Alternativ raw:)
+https://raw.githubusercontent.com/omgitsjan/instagram-follow-checker/main/PRIVACY.md
+
+Empfehlung für den Store: die blob-URL (GitHub-Ansicht) ist lesbar und üblich bei Open-Source-Extensions.
+
+
+10) Kurz-Check vor Submit
+-------------------------
+- Manifest-Permissions = activeTab, scripting, storage + Instagram-Hosts only
+- Remote Code = Nein
+- Privacy URL erreichbar (nach Push)
+- Beschreibung / Screenshots stimmen mit alleinigem Zweck überein
+- Keine irreführenden Claims (nicht „offiziell von Instagram/Meta“)

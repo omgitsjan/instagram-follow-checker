@@ -75,6 +75,16 @@ Dieses Repo ist **kein** Ratschlag, ToS zu umgehen. Es ist ein technisches Hobby
 
 ---
 
+## Privacy
+
+- Privacy policy: [PRIVACY.md](./PRIVACY.md)  
+- Public URL (Chrome Web Store): https://github.com/omgitsjan/instagram-follow-checker/blob/main/PRIVACY.md  
+- Store form answers (DE/EN): [`store/chrome-web-store-form-answers-de.txt`](./store/chrome-web-store-form-answers-de.txt)
+
+The extension processes Instagram relationship data **locally in your browser** only. No analysis data is sent to the developer’s servers.
+
+---
+
 ## Installation (unpacked)
 
 ### Variante A – Release-ZIP (empfohlen)
