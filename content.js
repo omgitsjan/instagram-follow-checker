@@ -51,9 +51,29 @@ async function igFetch(url, options = {}) {
     );
   }
   if (!res.ok) {
-    throw new Error(`Instagram responded with HTTP ${res.status}`);
+    let detail = "";
+    try {
+      detail = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
+    } catch {
+      /* ignore */
+    }
+    throw new Error(
+      detail
+        ? `Instagram HTTP ${res.status}: ${detail}`
+        : `Instagram responded with HTTP ${res.status}`
+    );
   }
-  return res.json();
+  const ct = res.headers.get("content-type") || "";
+  if (ct.includes("application/json")) {
+    return res.json();
+  }
+  // Some IG endpoints return JSON without content-type
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("Instagram returned non-JSON response.");
+  }
 }
 
 /** Follow / unfollow / remove follower via Instagram web endpoints */
@@ -301,18 +321,63 @@ function mapMediaItem(item, fallbackAuthor = null) {
   };
 }
 
-/**
- * Your own posts (user media feed) — more reliable than /feed/liked/ which often 400s.
- * GET /api/v1/feed/user/{user_id}/?count=12&max_id=...
- */
-async function fetchOwnPosts(userId, onProgress, { maxPages = 10 } = {}) {
-  const results = [];
-  let maxId = null;
-  let page = 0;
-  let meAuthor = null;
+function engagementScore(p) {
+  return (p.likeCount || 0) + (p.commentCount || 0) * 3;
+}
 
+function sortPostsByEngagement(posts) {
+  return [...posts].sort((a, b) => {
+    const d = engagementScore(b) - engagementScore(a);
+    if (d !== 0) return d;
+    return (b.takenAt || 0) - (a.takenAt || 0);
+  });
+}
+
+function sortPostsByRecency(posts) {
+  return [...posts].sort((a, b) => (b.takenAt || 0) - (a.takenAt || 0));
+}
+
+/** First page via web_profile_info (often works when feed/user fails). */
+async function fetchOwnPostsViaWebProfile(username, meAuthor) {
+  if (!username) return [];
+  const data = await igFetch(
+    `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`
+  );
+  const user = data?.data?.user;
+  const edges = user?.edge_owner_to_timeline_media?.edges || [];
+  return edges.map((e) => {
+    const n = e.node || e;
+    // Normalize Graph-ish node → mapMediaItem-ish
+    const mapped = mapMediaItem(
+      {
+        pk: n.id,
+        id: n.id,
+        code: n.shortcode,
+        caption: n.edge_media_to_caption?.edges?.[0]?.node?.text || "",
+        taken_at: n.taken_at_timestamp,
+        like_count: n.edge_liked_by?.count ?? n.edge_media_preview_like?.count,
+        comment_count: n.edge_media_to_comment?.count,
+        thumbnail_url: n.thumbnail_src || n.display_url,
+        image_versions2: n.display_url
+          ? { candidates: [{ url: n.display_url }] }
+          : undefined,
+        media_type: n.is_video ? 2 : 1,
+        user: meAuthor,
+      },
+      meAuthor
+    );
+    return mapped;
+  });
+}
+
+/**
+ * Own posts with multiple strategies (feed/user often fails / 400).
+ */
+async function fetchOwnPosts(userId, onProgress, { maxPages = 8 } = {}) {
+  let me = null;
+  let meAuthor = null;
   try {
-    const me = await getCurrentUser();
+    me = await getCurrentUser();
     meAuthor = {
       pk: me.id,
       id: me.id,
@@ -322,107 +387,177 @@ async function fetchOwnPosts(userId, onProgress, { maxPages = 10 } = {}) {
     };
     if (!userId) userId = me.id;
   } catch {
-    /* use passed userId */
+    /* continue */
   }
 
-  if (!userId) {
-    throw new Error("Could not resolve your user id for posts.");
+  if (!userId && !me?.username) {
+    throw new Error("Could not resolve your account for posts. Stay logged in on Instagram.");
   }
 
-  do {
-    page += 1;
-    let url = `https://www.instagram.com/api/v1/feed/user/${encodeURIComponent(userId)}/?count=12`;
-    if (maxId) url += `&max_id=${encodeURIComponent(maxId)}`;
-
-    const data = await igFetch(url);
-    const items = data.items || data.num_results ? data.items || [] : [];
-    const list = Array.isArray(items) ? items : [];
-    for (const raw of list) {
-      const media = raw.media || raw;
-      results.push(mapMediaItem(media, meAuthor));
+  const results = [];
+  const seen = new Set();
+  const pushAll = (list) => {
+    for (const p of list) {
+      if (!p?.id || seen.has(p.id)) continue;
+      seen.add(p.id);
+      results.push(p);
     }
+  };
 
-    if (onProgress) {
-      onProgress({
-        loaded: results.length,
-        page,
-        hasMore: Boolean(data.next_max_id || data.more_available),
-      });
+  // Strategy A: classic feed/user
+  let feedOk = false;
+  try {
+    let maxId = null;
+    let page = 0;
+    do {
+      page += 1;
+      let url = `https://www.instagram.com/api/v1/feed/user/${encodeURIComponent(userId)}/?count=12`;
+      if (maxId) url += `&max_id=${encodeURIComponent(maxId)}`;
+      const data = await igFetch(url);
+      const list = Array.isArray(data.items) ? data.items : [];
+      pushAll(list.map((raw) => mapMediaItem(raw.media || raw, meAuthor)));
+      feedOk = true;
+      if (onProgress) {
+        onProgress({
+          phase: "posts",
+          loaded: results.length,
+          page,
+          hasMore: Boolean(data.more_available),
+        });
+      }
+      maxId =
+        data.next_max_id ||
+        (data.more_available && list.length
+          ? String(list[list.length - 1].pk || list[list.length - 1].id || "")
+          : null);
+      if (!maxId || !data.more_available || page >= maxPages) break;
+      await sleep(DELAY_MS);
+    } while (maxId);
+  } catch (err) {
+    // Strategy B: web_profile_info first page
+    try {
+      const username = me?.username;
+      const viaProfile = await fetchOwnPostsViaWebProfile(username, meAuthor);
+      pushAll(viaProfile);
+      if (onProgress) {
+        onProgress({
+          phase: "posts",
+          loaded: results.length,
+          page: 1,
+          hasMore: false,
+          note: "web_profile_fallback",
+        });
+      }
+    } catch (err2) {
+      throw new Error(
+        `Could not load your posts. ${err?.message || err}. Fallback: ${err2?.message || err2}`
+      );
     }
+  }
 
-    maxId =
-      data.next_max_id ||
-      (data.more_available && list.length
-        ? String(list[list.length - 1].pk || list[list.length - 1].id || "")
-        : null);
+  if (!results.length && !feedOk) {
+    throw new Error("No posts found for your account.");
+  }
 
-    if (!maxId || !data.more_available || page >= maxPages) break;
-    await sleep(DELAY_MS);
-  } while (maxId);
+  return sortPostsByEngagement(results);
+}
 
-  // Sort by engagement (likes + comments) for analysis
-  results.sort((a, b) => {
-    const ea = (a.likeCount || 0) + (a.commentCount || 0) * 3;
-    const eb = (b.likeCount || 0) + (b.commentCount || 0) * 3;
-    return eb - ea;
-  });
-
-  return results;
+/** Likers of one media id (pk). */
+async function fetchMediaLikers(mediaId) {
+  const id = encodeURIComponent(String(mediaId).split("_")[0] || mediaId);
+  const urls = [
+    `https://www.instagram.com/api/v1/media/${id}/likers/`,
+    `https://www.instagram.com/api/v1/media/${encodeURIComponent(mediaId)}/likers/`,
+  ];
+  let lastErr = null;
+  for (const url of urls) {
+    try {
+      const data = await igFetch(url);
+      return (data.users || []).map(mapUser);
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error("Likers unavailable");
 }
 
 /**
- * Posts you liked (optional). IG web often returns 400 — try multiple shapes.
+ * Load own posts + rank fans by how many of your recent posts they liked.
+ * Tie-break: likes on newer posts rank higher (recency score).
  */
-async function fetchLikedPosts(onProgress, { maxPages = 6 } = {}) {
-  const results = [];
-  let maxId = null;
-  let page = 0;
-  const bases = [
-    (id) =>
-      id
-        ? `https://www.instagram.com/api/v1/feed/liked/?max_id=${encodeURIComponent(id)}`
-        : `https://www.instagram.com/api/v1/feed/liked/`,
-    (id) =>
-      id
-        ? `https://www.instagram.com/api/v1/media/liked/?max_id=${encodeURIComponent(id)}`
-        : `https://www.instagram.com/api/v1/media/liked/`,
-  ];
+async function analyzeOwnPostsWithFans(onProgress, options = {}) {
+  const maxPostPages = options.maxPostPages ?? 6;
+  const maxPostsForLikers = options.maxPostsForLikers ?? 12;
 
-  let baseIdx = 0;
-  let lastErr = null;
+  const me = await getCurrentUser();
+  const postsRanked = await fetchOwnPosts(me.id, onProgress, {
+    maxPages: maxPostPages,
+  });
 
-  do {
-    page += 1;
-    let data = null;
-    for (let i = baseIdx; i < bases.length; i++) {
-      try {
-        data = await igFetch(bases[i](maxId));
-        baseIdx = i;
-        lastErr = null;
-        break;
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-    if (!data) {
-      throw lastErr || new Error("Liked feed unavailable (HTTP error).");
-    }
+  // Recency order (newest first) for weight assignment
+  const chronological = sortPostsByRecency(postsRanked);
+  const scan = chronological.slice(0, maxPostsForLikers);
+  const n = scan.length;
 
-    const items = data.items || data.media_items || [];
-    for (const raw of items) {
-      results.push(mapMediaItem(raw.media || raw));
-    }
+  /** @type {Map<string, {user: object, count: number, recencyScore: number, postIds: string[]}>} */
+  const fanMap = new Map();
 
+  for (let i = 0; i < n; i++) {
+    const post = scan[i];
+    // Newer posts get higher weight → win ties when like-counts equal
+    const weight = n - i;
     if (onProgress) {
-      onProgress({ loaded: results.length, page, hasMore: Boolean(data.next_max_id) });
+      onProgress({
+        phase: "likers",
+        postIndex: i + 1,
+        postTotal: n,
+        loaded: postsRanked.length,
+        fans: fanMap.size,
+      });
     }
-
-    maxId = data.next_max_id || null;
-    if (!maxId || page >= maxPages) break;
+    try {
+      const likers = await fetchMediaLikers(post.id);
+      for (const u of likers) {
+        if (!u.id || u.id === me.id) continue;
+        let entry = fanMap.get(u.id);
+        if (!entry) {
+          entry = { user: u, count: 0, recencyScore: 0, postIds: [] };
+          fanMap.set(u.id, entry);
+        }
+        if (!entry.postIds.includes(post.id)) {
+          entry.count += 1;
+          entry.recencyScore += weight;
+          entry.postIds.push(post.id);
+          // Prefer richer profile fields if later liker payload has more
+          if (!entry.user.profilePic && u.profilePic) entry.user = u;
+        }
+      }
+    } catch {
+      // skip post if likers blocked
+    }
     await sleep(DELAY_MS);
-  } while (maxId);
+  }
 
-  return results;
+  const topFans = [...fanMap.values()]
+    .map((e) => ({
+      ...e.user,
+      postsLiked: e.count,
+      recencyScore: e.recencyScore,
+      likedPostIds: e.postIds,
+    }))
+    .sort((a, b) => {
+      if (b.postsLiked !== a.postsLiked) return b.postsLiked - a.postsLiked;
+      if (b.recencyScore !== a.recencyScore) return b.recencyScore - a.recencyScore;
+      return (a.username || "").localeCompare(b.username || "");
+    });
+
+  return {
+    posts: postsRanked,
+    chronological,
+    topFans,
+    postsScannedForLikers: n,
+    me,
+  };
 }
 
 async function fetchList(userId, type, onProgress) {
@@ -529,38 +664,36 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true; // async sendResponse
   }
 
-  if (msg?.type === "FETCH_OWN_POSTS" || msg?.type === "FETCH_LIKED") {
-    // FETCH_LIKED kept as alias; default is own posts (liked endpoint often 400)
+  if (
+    msg?.type === "FETCH_OWN_POSTS" ||
+    msg?.type === "FETCH_LIKED" ||
+    msg?.type === "ANALYZE_OWN_POSTS"
+  ) {
     (async () => {
       try {
-        const mode = msg.mode === "liked" ? "liked" : "own";
         const onProgress = (p) => {
           chrome.runtime
             .sendMessage({
               type: "PROGRESS",
               stage: "posts",
-              loaded: p.loaded,
-              page: p.page,
+              ...p,
             })
             .catch(() => {});
         };
 
-        let posts;
-        if (mode === "liked") {
-          posts = await fetchLikedPosts(onProgress, {
-            maxPages: msg.maxPages ?? 6,
-          });
-        } else {
-          const me = await getCurrentUser();
-          posts = await fetchOwnPosts(me.id, onProgress, {
-            maxPages: msg.maxPages ?? 10,
-          });
-        }
+        // Full analysis: posts ranked + fan ranking by likes on your posts
+        const result = await analyzeOwnPostsWithFans(onProgress, {
+          maxPostPages: msg.maxPages ?? 6,
+          maxPostsForLikers: msg.maxPostsForLikers ?? 12,
+        });
+
         sendResponse({
           ok: true,
-          posts,
-          liked: posts, // backward compat with older popup
-          mode,
+          posts: result.posts,
+          liked: result.posts,
+          topFans: result.topFans,
+          postsScannedForLikers: result.postsScannedForLikers,
+          me: result.me,
           finishedAt: Date.now(),
         });
       } catch (err) {

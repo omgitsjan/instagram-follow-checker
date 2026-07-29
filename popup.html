@@ -269,12 +269,35 @@
     <!-- Own posts insights section -->
     <div id="section-liked" class="section-body hidden">
       <p class="section-hint" data-i18n="postsHint">
-        Load your own posts and rank them by likes/comments (session-only).
+        Load your posts (ranked by engagement) and fans who liked the most of them.
       </p>
       <button id="loadLikedBtn" class="btn primary" type="button" data-i18n="loadPosts">
         Load my posts
       </button>
       <div id="postsSummary" class="metric-grid hidden" style="margin-top: 8px"></div>
+      <nav id="postsTopics" class="tabs analytics-topics hidden" role="tablist">
+        <button type="button" class="tab active" data-posts-topic="posts" role="tab" aria-selected="true">
+          <span data-i18n="postsTopicPosts">By engagement</span>
+          <span class="badge" id="badgePostsCount">0</span>
+        </button>
+        <button type="button" class="tab" data-posts-topic="fans" role="tab" aria-selected="false">
+          <span data-i18n="postsTopicFans">Top fans</span>
+          <span class="badge info" id="badgeFansCount">0</span>
+        </button>
+      </nav>
+      <div class="search-row hidden" id="postsSearchRow">
+        <input
+          id="postsSearchInput"
+          type="search"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Search username…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="postsExportBtn" class="btn ghost" type="button" data-i18n="export" data-i18n-title="exportTitle">
+          Export
+        </button>
+      </div>
       <main class="panels panels-always">
         <section id="panel-liked" class="panel"></section>
       </main>

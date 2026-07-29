@@ -26,6 +26,10 @@ const state = {
   notFollowedByMe: [],
   counts: null,
   liked: [],
+  topFans: [],
+  postsScannedForLikers: 0,
+  postsTopic: "posts",
+  postsQuery: "",
   activeTab: "mutual",
   activeSection: "relationships",
   analyticsTopic: "topFollowers",
@@ -453,12 +457,23 @@ function renderBots() {
   panel.appendChild(frag);
 }
 
+function filterFansForDisplay(fans) {
+  const followerIds = new Set((state.followers || []).map((u) => u.id));
+  // Prefer followers first; if none of the fans are followers, show all fans
+  const asFollowers = fans.filter((f) => followerIds.has(f.id));
+  return asFollowers.length ? asFollowers : fans;
+}
+
 function renderPostsSummary() {
   const el = $("postsSummary");
+  const topics = $("postsTopics");
+  const searchRow = $("postsSearchRow");
   if (!el) return;
   if (!state.liked.length) {
     el.classList.add("hidden");
     el.replaceChildren();
+    show(topics, false);
+    show(searchRow, false);
     return;
   }
   const likes = state.liked.map((p) => p.likeCount).filter((n) => n != null);
@@ -476,13 +491,30 @@ function renderPostsSummary() {
     <div class="metric"><strong>${avgC != null ? fmt(avgC) : "—"}</strong><span>${escapeHtml(t("metricAvgComments"))}</span></div>
     <div class="metric"><strong>${topL != null ? fmt(topL) : "—"}</strong><span>${escapeHtml(t("metricTopLikes"))}</span></div>
   `;
+
+  const fans = filterFansForDisplay(state.topFans || []);
+  const bP = $("badgePostsCount");
+  const bF = $("badgeFansCount");
+  if (bP) bP.textContent = String(state.liked.length);
+  if (bF) bF.textContent = String(fans.length);
+  show(topics, true);
+  show(searchRow, true);
 }
 
-function renderLiked() {
+function switchPostsTopic(topic) {
+  state.postsTopic = topic === "fans" ? "fans" : "posts";
+  document.querySelectorAll("[data-posts-topic]").forEach((btn) => {
+    const on = btn.dataset.postsTopic === state.postsTopic;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  renderLiked();
+}
+
+function renderPostsList() {
   const panel = $("panel-liked");
   if (!panel) return;
   panel.replaceChildren();
-  renderPostsSummary();
 
   if (!state.likedLoaded && !state.liked.length) {
     const empty = document.createElement("div");
@@ -492,17 +524,84 @@ function renderLiked() {
     return;
   }
 
-  if (!state.liked.length) {
+  const fmt = window.IGAnalytics?.formatCount || ((n) => String(n ?? "—"));
+  const q = state.postsQuery.trim().toLowerCase();
+
+  if (state.postsTopic === "fans") {
+    let fans = filterFansForDisplay(state.topFans || []);
+    if (q) {
+      fans = fans.filter(
+        (u) =>
+          u.username.toLowerCase().includes(q) ||
+          (u.fullName || "").toLowerCase().includes(q)
+      );
+    }
+    if (!fans.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = state.topFans?.length
+        ? t("noSearchResults")
+        : t("fansEmpty");
+      panel.appendChild(empty);
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    fans.forEach((u, i) => {
+      const row = document.createElement("div");
+      row.className = "user-card";
+      const link = document.createElement("a");
+      link.className = "user-link";
+      link.href = `https://www.instagram.com/${encodeURIComponent(u.username)}/`;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      const idx = document.createElement("span");
+      idx.className = "rank-idx";
+      idx.textContent = String(i + 1);
+      link.appendChild(idx);
+      link.appendChild(buildAvatar(u));
+      const meta = document.createElement("div");
+      meta.className = "user-meta";
+      const isFollower = (state.followers || []).some((f) => f.id === u.id);
+      meta.innerHTML = `
+        <div class="name">@${escapeHtml(u.username)}</div>
+        <div class="full">${escapeHtml(
+          t("fanLikedPosts", { n: u.postsLiked || 0 }) +
+            (isFollower ? " · " + t("fanIsFollower") : "")
+        )}</div>`;
+      link.appendChild(meta);
+      row.appendChild(link);
+      const actions = document.createElement("div");
+      actions.className = "user-actions";
+      const val = document.createElement("span");
+      val.className = "rank-val";
+      val.textContent = t("fanLikedPosts", { n: u.postsLiked || 0 });
+      actions.appendChild(val);
+      row.appendChild(actions);
+      frag.appendChild(row);
+    });
+    panel.appendChild(frag);
+    return;
+  }
+
+  // Posts by engagement
+  let posts = state.liked || [];
+  if (q) {
+    posts = posts.filter(
+      (p) =>
+        (p.caption || "").toLowerCase().includes(q) ||
+        (p.code || "").toLowerCase().includes(q)
+    );
+  }
+  if (!posts.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = t("likedEmpty");
+    empty.textContent = state.liked.length ? t("noSearchResults") : t("likedEmpty");
     panel.appendChild(empty);
     return;
   }
 
-  const fmt = window.IGAnalytics?.formatCount || ((n) => String(n ?? "—"));
   const frag = document.createDocumentFragment();
-  state.liked.forEach((post, i) => {
+  posts.forEach((post, i) => {
     const a = document.createElement("a");
     a.className = "liked-card";
     a.href = post.permalink || "#";
@@ -547,36 +646,117 @@ function renderLiked() {
   panel.appendChild(frag);
 }
 
+function renderLiked() {
+  renderPostsSummary();
+  // sync topic buttons
+  document.querySelectorAll("[data-posts-topic]").forEach((btn) => {
+    const on = btn.dataset.postsTopic === state.postsTopic;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  renderPostsList();
+}
+
+function exportPostsList() {
+  const topic = state.postsTopic;
+  let payload;
+  if (topic === "fans") {
+    let fans = filterFansForDisplay(state.topFans || []);
+    const q = state.postsQuery.trim().toLowerCase();
+    if (q) {
+      fans = fans.filter(
+        (u) =>
+          u.username.toLowerCase().includes(q) ||
+          (u.fullName || "").toLowerCase().includes(q)
+      );
+    }
+    payload = {
+      exportedAt: new Date().toISOString(),
+      section: "posts",
+      topic: "fans",
+      postsScannedForLikers: state.postsScannedForLikers,
+      account: state.me,
+      count: fans.length,
+      users: fans,
+    };
+  } else {
+    let posts = state.liked || [];
+    const q = state.postsQuery.trim().toLowerCase();
+    if (q) {
+      posts = posts.filter((p) => (p.caption || "").toLowerCase().includes(q));
+    }
+    payload = {
+      exportedAt: new Date().toISOString(),
+      section: "posts",
+      topic: "engagement",
+      account: state.me,
+      count: posts.length,
+      posts,
+    };
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `instagram-posts-${topic}-${state.me?.username || "export"}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 async function loadLikedPosts() {
   if (!loadLikedBtn) return;
   loadLikedBtn.disabled = true;
   setStatus(t("loadingLiked"));
+  show(progressWrap, true);
+  progressFill.style.width = "12%";
   try {
     const tabId = await resolveIgTabId();
     if (!tabId) throw new Error(t("noIgTab"));
-    await ensureContentScript(tabId);
-    // Own posts feed (liked endpoint often returns HTTP 400 on web)
+    // Always re-inject so latest content.js is used
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"],
+    });
     const res = await chrome.tabs.sendMessage(tabId, {
-      type: "FETCH_OWN_POSTS",
-      mode: "own",
-      maxPages: 10,
+      type: "ANALYZE_OWN_POSTS",
+      maxPages: 6,
+      maxPostsForLikers: 12,
     });
     if (!res?.ok) throw new Error(res?.error || t("actionFailed"));
     state.liked = res.posts || res.liked || [];
+    state.topFans = res.topFans || [];
+    state.postsScannedForLikers = res.postsScannedForLikers || 0;
+    if (res.me) state.me = { ...(state.me || {}), ...res.me };
     state.likedLoaded = true;
     try {
       await chrome.storage.local.set({
-        lastLiked: { liked: state.liked, mode: "own", finishedAt: Date.now() },
+        lastLiked: {
+          liked: state.liked,
+          topFans: state.topFans,
+          postsScannedForLikers: state.postsScannedForLikers,
+          mode: "own+fans",
+          finishedAt: Date.now(),
+        },
       });
     } catch {
       /* ignore */
     }
     renderLiked();
-    setStatus(t("likedLoaded", { n: state.liked.length }), "ok");
+    setStatus(
+      t("likedLoadedFans", {
+        n: state.liked.length,
+        fans: filterFansForDisplay(state.topFans).length,
+        scanned: state.postsScannedForLikers,
+      }),
+      "ok"
+    );
   } catch (err) {
     setStatus(escapeHtml(err?.message || String(err)), "error");
   } finally {
     loadLikedBtn.disabled = false;
+    show(progressWrap, false);
   }
 }
 
@@ -1175,7 +1355,18 @@ function onProgress(msg) {
     progressFill.style.width = "75%";
   }
   if (msg.stage === "liked" || msg.stage === "posts") {
-    progressFill.style.width = "50%";
+    if (msg.phase === "likers") {
+      progressFill.style.width = `${30 + Math.round((60 * (msg.postIndex || 0)) / Math.max(1, msg.postTotal || 1))}%`;
+      const text = t("progressLikers", {
+        i: msg.postIndex || 0,
+        n: msg.postTotal || 0,
+        fans: msg.fans || 0,
+      });
+      progressText.textContent = text.replace(/<[^>]+>/g, "");
+      setStatus(text);
+      return;
+    }
+    progressFill.style.width = "35%";
     const text = t("progressLiked", { loaded: msg.loaded ?? 0 });
     progressText.textContent = text;
     setStatus(text);
@@ -1287,6 +1478,8 @@ async function init() {
 
   if (stored.lastLiked?.liked?.length) {
     state.liked = stored.lastLiked.liked;
+    state.topFans = stored.lastLiked.topFans || [];
+    state.postsScannedForLikers = stored.lastLiked.postsScannedForLikers || 0;
     state.likedLoaded = true;
     renderLiked();
   }
@@ -1360,6 +1553,15 @@ document.querySelectorAll(".section-btn").forEach((btn) => {
 });
 
 loadLikedBtn?.addEventListener("click", () => loadLikedPosts());
+
+document.querySelectorAll("[data-posts-topic]").forEach((btn) => {
+  btn.addEventListener("click", () => switchPostsTopic(btn.dataset.postsTopic));
+});
+$("postsSearchInput")?.addEventListener("input", (e) => {
+  state.postsQuery = e.target.value;
+  renderPostsList();
+});
+$("postsExportBtn")?.addEventListener("click", () => exportPostsList());
 
 botSearchInput?.addEventListener("input", () => {
   state.botQuery = botSearchInput.value;
