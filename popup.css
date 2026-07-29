@@ -339,6 +339,49 @@ h1 {
   padding: 0 10px 8px;
 }
 
+.section-nav.has-secret {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.section-btn.secret-tab {
+  border-style: dashed;
+  color: var(--warn);
+}
+
+.coming-soon {
+  margin: 16px 14px;
+  padding: 20px 16px;
+  border-radius: 14px;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  text-align: center;
+}
+
+.coming-soon-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+  border: 1px solid rgba(245, 165, 36, 0.4);
+  background: rgba(245, 165, 36, 0.12);
+  border-radius: 99px;
+  padding: 4px 10px;
+  margin-bottom: 10px;
+}
+
+.coming-soon h3 {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.coming-soon p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .section-btn {
   border: 1px solid var(--border);
   background: var(--surface);

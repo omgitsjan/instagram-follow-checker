@@ -169,6 +169,15 @@
       <button type="button" class="section-btn" data-section="liked" data-i18n="navPosts">
         Posts
       </button>
+      <button
+        type="button"
+        class="section-btn secret-tab hidden"
+        data-section="admire"
+        id="navAdmire"
+        data-i18n="navAdmire"
+      >
+        Admire
+      </button>
     </nav>
 
     <!-- Relationships section -->
@@ -294,41 +303,26 @@
       </main>
     </div>
 
-    <!-- Own posts insights section -->
+    <!-- Posts — coming soon -->
     <div id="section-liked" class="section-body hidden">
-      <p class="section-hint" data-i18n="postsHint">
-        Load your posts (ranked by engagement) and fans who liked the most of them.
-      </p>
-      <button id="loadLikedBtn" class="btn primary" type="button" data-i18n="loadPosts">
-        Load my posts
-      </button>
-      <div id="postsSummary" class="metric-grid hidden" style="margin-top: 8px"></div>
-      <nav id="postsTopics" class="tabs analytics-topics hidden" role="tablist">
-        <button type="button" class="tab active" data-posts-topic="posts" role="tab" aria-selected="true">
-          <span data-i18n="postsTopicPosts">By engagement</span>
-          <span class="badge" id="badgePostsCount">0</span>
-        </button>
-        <button type="button" class="tab" data-posts-topic="fans" role="tab" aria-selected="false">
-          <span data-i18n="postsTopicFans">Top fans</span>
-          <span class="badge info" id="badgeFansCount">0</span>
-        </button>
-      </nav>
-      <div class="search-row hidden" id="postsSearchRow">
-        <input
-          id="postsSearchInput"
-          type="search"
-          data-i18n-placeholder="searchPlaceholder"
-          placeholder="Search username…"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <button id="postsExportBtn" class="btn ghost" type="button" data-i18n="export" data-i18n-title="exportTitle">
-          Export
-        </button>
+      <div class="coming-soon">
+        <div class="coming-soon-badge" data-i18n="comingSoon">Coming soon</div>
+        <h3 data-i18n="postsComingTitle">Post insights</h3>
+        <p data-i18n="postsComingBody">
+          Ranking your posts and who likes them most is in the works. Instagram’s web APIs for this are unstable right now.
+        </p>
       </div>
-      <main class="panels panels-always">
-        <section id="panel-liked" class="panel"></section>
-      </main>
+    </div>
+
+    <!-- Secret Admire — coming soon (unlock: click logo 5×) -->
+    <div id="section-admire" class="section-body hidden">
+      <div class="coming-soon">
+        <div class="coming-soon-badge" data-i18n="comingSoon">Coming soon</div>
+        <h3 data-i18n="admireComingTitle">Secret admirers</h3>
+        <p data-i18n="admireComingBody">
+          Who engages with you the most without always following back — planned for a future update.
+        </p>
+      </div>
     </div>
 
     <footer class="footer">

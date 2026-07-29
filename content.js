@@ -645,42 +645,87 @@ async function fetchList(userId, type, onProgress) {
   return results;
 }
 
-/** Fill missing public counts (list API often omits them). Mutates users in place. */
-async function enrichUsersWithCounts(users, onProgress, { max = 80, delayMs = 650 } = {}) {
+function applyProfileInfoToUser(u, info) {
+  if (!info) return false;
+  let changed = false;
+  // REST user object
+  if (info.follower_count != null) {
+    u.followerCount = Number(info.follower_count);
+    changed = true;
+  }
+  if (info.following_count != null) {
+    u.followingCount = Number(info.following_count);
+    changed = true;
+  }
+  if (info.media_count != null) {
+    u.mediaCount = Number(info.media_count);
+    changed = true;
+  }
+  // web_profile_info graph shape
+  if (info.edge_followed_by?.count != null) {
+    u.followerCount = Number(info.edge_followed_by.count);
+    changed = true;
+  }
+  if (info.edge_follow?.count != null) {
+    u.followingCount = Number(info.edge_follow.count);
+    changed = true;
+  }
+  if (info.edge_owner_to_timeline_media?.count != null) {
+    u.mediaCount = Number(info.edge_owner_to_timeline_media.count);
+    changed = true;
+  }
+  if (info.is_private != null) u.isPrivate = Boolean(info.is_private);
+  if (info.is_verified != null) u.isVerified = Boolean(info.is_verified);
+  if (info.has_anonymous_profile_picture != null) {
+    u.hasAnonymousProfilePic = Boolean(info.has_anonymous_profile_picture);
+  }
+  if (!u.profilePic && (info.profile_pic_url || info.profile_pic_url_hd)) {
+    u.profilePic = pickProfilePic(info);
+  }
+  if (!u.fullName && info.full_name) u.fullName = info.full_name;
+  return changed;
+}
+
+/**
+ * Fill missing public counts. List API almost never includes them on web.
+ * Prefer web_profile_info by username (more reliable than users/{id}/info on web).
+ */
+async function enrichUsersWithCounts(users, onProgress, { max = 120, delayMs = 550 } = {}) {
   const targets = (users || []).filter(
     (u) =>
-      u.id &&
+      u.username &&
       (u.followerCount == null ||
         u.followingCount == null ||
         u.mediaCount == null)
   );
   const slice = targets.slice(0, max);
+  let ok = 0;
   for (let i = 0; i < slice.length; i++) {
     const u = slice[i];
+    let got = false;
+    // 1) web_profile_info (public profiles)
     try {
       const data = await igFetch(
-        `https://www.instagram.com/api/v1/users/${encodeURIComponent(u.id)}/info/`
+        `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(u.username)}`
       );
-      const info = data?.user;
-      if (info) {
-        if (info.follower_count != null) u.followerCount = Number(info.follower_count);
-        if (info.following_count != null) u.followingCount = Number(info.following_count);
-        if (info.media_count != null) u.mediaCount = Number(info.media_count);
-        if (info.is_private != null) u.isPrivate = Boolean(info.is_private);
-        if (info.is_verified != null) u.isVerified = Boolean(info.is_verified);
-        if (info.has_anonymous_profile_picture != null) {
-          u.hasAnonymousProfilePic = Boolean(info.has_anonymous_profile_picture);
-        }
-        if (!u.profilePic && info.profile_pic_url) {
-          u.profilePic = pickProfilePic(info);
-        }
-        if (!u.fullName && info.full_name) u.fullName = info.full_name;
-      }
+      got = applyProfileInfoToUser(u, data?.data?.user);
     } catch {
-      /* skip */
+      /* try next */
     }
+    // 2) users/{id}/info fallback
+    if (!got && u.id) {
+      try {
+        const data = await igFetch(
+          `https://www.instagram.com/api/v1/users/${encodeURIComponent(u.id)}/info/`
+        );
+        got = applyProfileInfoToUser(u, data?.user);
+      } catch {
+        /* skip */
+      }
+    }
+    if (got) ok += 1;
     if (onProgress) {
-      onProgress({ enriched: i + 1, total: slice.length });
+      onProgress({ enriched: i + 1, total: slice.length, ok });
     }
     await sleep(delayMs);
   }
@@ -846,7 +891,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             .catch(() => {});
         });
 
-        // List payloads often omit public counts → enrich for Analytics/Bots
+        // List payloads omit public counts on web → enrich following (Analytics)
+        // and a sample of followers (Bots heuristics)
         await enrichUsersWithCounts(
           following,
           (p) => {
@@ -857,10 +903,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                 target: "following",
                 enriched: p.enriched,
                 total: p.total,
+                ok: p.ok,
               })
               .catch(() => {});
           },
-          { max: 100, delayMs: 600 }
+          { max: 150, delayMs: 500 }
         );
         await enrichUsersWithCounts(
           followers,
@@ -872,10 +919,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                 target: "followers",
                 enriched: p.enriched,
                 total: p.total,
+                ok: p.ok,
               })
               .catch(() => {});
           },
-          { max: 80, delayMs: 600 }
+          { max: 100, delayMs: 500 }
         );
 
         const lists = compareLists(following, followers);

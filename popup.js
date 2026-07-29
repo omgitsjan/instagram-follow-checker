@@ -53,10 +53,12 @@ const tipModalCancel = $("tipModalCancel");
 let tipModalResolver = null;
 
 const ALL_TABS = ["following", "followers", "mutual", "notBack", "notMe"];
-const SECTIONS = ["relationships", "analytics", "bots", "liked"];
+const SECTIONS = ["relationships", "analytics", "bots", "liked", "admire"];
 const sectionNav = $("sectionNav");
-const loadLikedBtn = $("loadLikedBtn");
 const botSearchInput = $("botSearchInput");
+const navAdmire = $("navAdmire");
+let logoClickCount = 0;
+let logoClickTimer = null;
 
 /* ---------- i18n ---------- */
 
@@ -112,7 +114,6 @@ function applyStaticI18n() {
     renderAll();
     renderAnalytics();
     renderBots();
-    renderLiked();
     if (state.statusIsIdle === false && state.counts) {
       setStatus(
         t("doneSummary", {
@@ -127,11 +128,23 @@ function applyStaticI18n() {
   }
 }
 
+function unlockAdmireTab() {
+  if (!navAdmire || !sectionNav) return;
+  navAdmire.classList.remove("hidden");
+  sectionNav.classList.add("has-secret");
+  setStatus(t("admireUnlocked"), "ok");
+}
+
 function switchSection(name) {
   if (!SECTIONS.includes(name)) name = "relationships";
+  // Guard secret tab if still locked
+  if (name === "admire" && navAdmire?.classList.contains("hidden")) {
+    name = "relationships";
+  }
   state.activeSection = name;
 
   document.querySelectorAll(".section-btn").forEach((btn) => {
+    if (btn.classList.contains("hidden")) return;
     const on = btn.dataset.section === name;
     btn.classList.toggle("active", on);
   });
@@ -144,7 +157,7 @@ function switchSection(name) {
 
   if (name === "analytics") renderAnalytics();
   if (name === "bots") renderBots();
-  if (name === "liked") renderLiked();
+  // posts + admire are static "coming soon" panels
 }
 
 function miniAvatar(u) {
@@ -235,11 +248,13 @@ function renderAnalyticsSummaryOnly() {
   const s = A.buildAnalyticsSummary(state);
   state.analyticsCache = s;
 
+  const cov = s.coverage.followingWithFollowerCount;
+  const total = s.coverage.followingTotal;
   summaryEl.innerHTML = `
     <div class="metric"><strong>${A.formatPct(s.mutualRate)}</strong><span>${escapeHtml(t("metricMutualRate"))}</span></div>
     <div class="metric"><strong>${A.formatPct(s.notBackRate)}</strong><span>${escapeHtml(t("metricNotBackRate"))}</span></div>
     <div class="metric"><strong>${A.formatPct(s.oneWayFollowerRate)}</strong><span>${escapeHtml(t("metricOneWayFollowers"))}</span></div>
-    <div class="metric"><strong>${s.coverage.followingWithFollowerCount}/${s.coverage.followingTotal}</strong><span>${escapeHtml(t("metricCoverage"))}</span></div>
+    <div class="metric"><strong>${cov}/${total}</strong><span>${escapeHtml(t("metricCoverage"))}</span></div>
   `;
 
   const b1 = $("badgeTopFollowers");
@@ -251,6 +266,28 @@ function renderAnalyticsSummaryOnly() {
 
   show(topicsEl, true);
   show(searchRow, true);
+
+  // Empty ranking lists → explain enrich / private accounts
+  if (
+    s.topByFollowers.length === 0 &&
+    s.topByFollowing.length === 0 &&
+    s.worstRatio.length === 0
+  ) {
+    const panel = $("panel-analytics");
+    if (panel) {
+      panel.replaceChildren();
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = t("analyticsNoCounts");
+      panel.appendChild(empty);
+    }
+    document.querySelectorAll("[data-analytics-topic]").forEach((btn) => {
+      const on = btn.dataset.analyticsTopic === state.analyticsTopic;
+      btn.classList.toggle("active", on);
+    });
+    return;
+  }
+
   switchAnalyticsTopic(state.analyticsTopic);
 }
 
@@ -1553,13 +1590,18 @@ async function init() {
   applyStaticI18n();
   show(sectionNav, true);
 
-  if (stored.lastLiked?.liked?.length) {
-    state.liked = stored.lastLiked.liked;
-    state.topFans = stored.lastLiked.topFans || [];
-    state.postsScannedForLikers = stored.lastLiked.postsScannedForLikers || 0;
-    state.likedLoaded = true;
-    renderLiked();
-  }
+  // Secret Admire: click logo 5 times quickly
+  headerLogo?.addEventListener("click", () => {
+    logoClickCount += 1;
+    if (logoClickTimer) clearTimeout(logoClickTimer);
+    logoClickTimer = setTimeout(() => {
+      logoClickCount = 0;
+    }, 2000);
+    if (logoClickCount >= 5) {
+      logoClickCount = 0;
+      unlockAdmireTab();
+    }
+  });
 
   if (stored.lastResult?.ok) {
     onResult(stored.lastResult, { keepTab: true });
@@ -1656,17 +1698,6 @@ document.querySelectorAll(".stat-btn").forEach((btn) => {
 document.querySelectorAll(".section-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchSection(btn.dataset.section));
 });
-
-loadLikedBtn?.addEventListener("click", () => loadLikedPosts());
-
-document.querySelectorAll("[data-posts-topic]").forEach((btn) => {
-  btn.addEventListener("click", () => switchPostsTopic(btn.dataset.postsTopic));
-});
-$("postsSearchInput")?.addEventListener("input", (e) => {
-  state.postsQuery = e.target.value;
-  renderPostsList();
-});
-$("postsExportBtn")?.addEventListener("click", () => exportPostsList());
 
 botSearchInput?.addEventListener("input", () => {
   state.botQuery = botSearchInput.value;
