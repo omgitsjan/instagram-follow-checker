@@ -113,10 +113,14 @@ const I18N = {
     admireSoon3:
       "Viewers/likers who don’t follow you (session-only, no Graph API keys)",
     admireSoon4: "Repeat viewers ranked above one-time visitors",
-    analyticsNoCounts:
-      "No public follower/following counts yet. Wait until analysis finishes enriching profiles (progress bar), or accounts are private/restricted.",
     analyticsHint:
-      "One global analysis fills this page. Rankings need public counts (loaded during enrich).",
+      "Charts from your last analysis lists only — no extra Instagram profile lookups.",
+    chartFollowingTitle: "Your following",
+    chartFollowersTitle: "Your followers",
+    chartNetworkTitle: "Relationship mix",
+    chartMutual: "Mutual",
+    chartNotBack: "Not following back",
+    chartNotMe: "You don’t follow",
     botsHint:
       "<strong>Heuristic only</strong> — not proof of bots. Only score ≥ 25. Sorted by risk among your followers.",
     needAnalysisFirst: "Run a full analysis first to unlock rankings and bot scores.",
@@ -255,10 +259,14 @@ const I18N = {
     admireSoon3:
       "Viewer/Liker, die dir nicht folgen (nur Session, keine Graph-API-Keys)",
     admireSoon4: "Wiederholte Viewer höher als Einmal-Besucher",
-    analyticsNoCounts:
-      "Noch keine öffentlichen Follower-/Following-Zahlen. Warte bis die Analyse Profile anreichert (Fortschrittsbalken), oder Accounts sind privat/eingeschränkt.",
     analyticsHint:
-      "Eine globale Analyse füllt diese Seite. Rankings brauchen öffentliche Zähler (während Enrich).",
+      "Diagramme nur aus deiner letzten Analyse — keine extra Profil-Lookups.",
+    chartFollowingTitle: "Dein Following",
+    chartFollowersTitle: "Deine Follower",
+    chartNetworkTitle: "Beziehungs-Mix",
+    chartMutual: "Gegenseitig",
+    chartNotBack: "Folgt nicht zurück",
+    chartNotMe: "Du folgst nicht",
     botsHint:
       "<strong>Nur Heuristik</strong> — kein Beweis für Bots. Nur Score ≥ 25. Sortiert nach Risiko unter deinen Followern.",
     needAnalysisFirst: "Zuerst eine volle Analyse starten, um Rankings und Bot-Scores freizuschalten.",

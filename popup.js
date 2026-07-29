@@ -33,8 +33,6 @@ const state = {
   postsQuery: "",
   activeTab: "mutual",
   activeSection: "relationships",
-  analyticsTopic: "topFollowers",
-  analyticsQuery: "",
   analyticsCache: null,
   query: "",
   botQuery: "",
@@ -284,67 +282,74 @@ function miniAvatar(u) {
   return d;
 }
 
-function getAnalyticsTopicMeta() {
-  const A = window.IGAnalytics;
-  if (!A || !state.analyticsCache) return null;
-  const s = state.analyticsCache;
-  const topics = {
-    topFollowers: {
-      key: "topFollowers",
-      title: t("rankTopFollowers"),
-      rows: s.topByFollowers,
-      value: (u) => t("rankFollowers", { n: A.formatCount(u.followerCount) }),
-    },
-    topFollowing: {
-      key: "topFollowing",
-      title: t("rankTopFollowing"),
-      rows: s.topByFollowing,
-      value: (u) => t("rankFollowing", { n: A.formatCount(u.followingCount) }),
-    },
-    worstRatio: {
-      key: "worstRatio",
-      title: t("rankWorstRatio"),
-      rows: s.worstRatio,
-      value: (u) => {
-        const r = A.ratioFollowingToFollowers(u);
-        return t("rankRatio", { n: r != null ? r.toFixed(1) : "—" });
-      },
-    },
+function chartLabel(key) {
+  const map = {
+    mutual: t("chartMutual"),
+    notBack: t("chartNotBack"),
+    notMe: t("chartNotMe"),
   };
-  return topics[state.analyticsTopic] || topics.topFollowers;
+  return map[key] || key;
 }
 
-function switchAnalyticsTopic(topic) {
-  if (!["topFollowers", "topFollowing", "worstRatio"].includes(topic)) {
-    topic = "topFollowers";
+function buildChartCard(title, segments, centerText, centerSub) {
+  const card = document.createElement("div");
+  card.className = "chart-card";
+
+  const h = document.createElement("h3");
+  h.className = "chart-title";
+  h.textContent = title;
+  card.appendChild(h);
+
+  const body = document.createElement("div");
+  body.className = "chart-body";
+
+  const canvas = document.createElement("canvas");
+  canvas.className = "chart-canvas";
+  body.appendChild(canvas);
+
+  const legend = document.createElement("ul");
+  legend.className = "chart-legend";
+  const total = segments.reduce((s, x) => s + (Number(x.value) || 0), 0);
+  for (const seg of segments) {
+    const li = document.createElement("li");
+    const pct = total > 0 ? Math.round(((Number(seg.value) || 0) / total) * 100) : 0;
+    li.innerHTML = `
+      <span class="swatch" style="background:${seg.color}"></span>
+      <span class="lab">${escapeHtml(chartLabel(seg.key || seg.label))}</span>
+      <span class="num">${escapeHtml(String(seg.value))} · ${pct}%</span>`;
+    legend.appendChild(li);
   }
-  state.analyticsTopic = topic;
-  document.querySelectorAll("[data-analytics-topic]").forEach((btn) => {
-    const on = btn.dataset.analyticsTopic === topic;
-    btn.classList.toggle("active", on);
-    btn.setAttribute("aria-selected", on ? "true" : "false");
+  body.appendChild(legend);
+  card.appendChild(body);
+
+  // Draw after in DOM
+  requestAnimationFrame(() => {
+    if (window.IGAnalytics?.drawDoughnut) {
+      window.IGAnalytics.drawDoughnut(canvas, segments, {
+        size: 132,
+        hole: 0.58,
+        centerText,
+        centerSub,
+      });
+    }
   });
-  renderAnalyticsList();
+
+  return card;
 }
 
-function renderAnalyticsSummaryOnly() {
+function renderAnalytics() {
   const summaryEl = $("analyticsSummary");
-  const topicsEl = $("analyticsTopics");
+  const panel = $("panel-analytics");
   const searchRow = $("analyticsSearchRow");
-  if (!summaryEl || !window.IGAnalytics) return;
+  if (!summaryEl || !panel || !window.IGAnalytics) return;
 
   if (!state.counts) {
     summaryEl.innerHTML = `<div class="empty" style="grid-column:1/-1">${escapeHtml(t("needAnalysisFirst"))}</div>`;
-    show(topicsEl, false);
-    show(searchRow, false);
-    const panel = $("panel-analytics");
-    if (panel) {
-      panel.replaceChildren();
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = t("needAnalysisFirst");
-      panel.appendChild(empty);
-    }
+    panel.replaceChildren();
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = t("needAnalysisFirst");
+    panel.appendChild(empty);
     state.analyticsCache = null;
     return;
   }
@@ -353,145 +358,68 @@ function renderAnalyticsSummaryOnly() {
   const s = A.buildAnalyticsSummary(state);
   state.analyticsCache = s;
 
-  const cov = s.coverage.followingWithFollowerCount;
-  const total = s.coverage.followingTotal;
   summaryEl.innerHTML = `
+    <div class="metric"><strong>${A.formatCount(s.followingCount)}</strong><span>${escapeHtml(t("following"))}</span></div>
+    <div class="metric"><strong>${A.formatCount(s.followersCount)}</strong><span>${escapeHtml(t("followers"))}</span></div>
     <div class="metric"><strong>${A.formatPct(s.mutualRate)}</strong><span>${escapeHtml(t("metricMutualRate"))}</span></div>
     <div class="metric"><strong>${A.formatPct(s.notBackRate)}</strong><span>${escapeHtml(t("metricNotBackRate"))}</span></div>
-    <div class="metric"><strong>${A.formatPct(s.oneWayFollowerRate)}</strong><span>${escapeHtml(t("metricOneWayFollowers"))}</span></div>
-    <div class="metric"><strong>${cov}/${total}</strong><span>${escapeHtml(t("metricCoverage"))}</span></div>
   `;
 
-  const b1 = $("badgeTopFollowers");
-  const b2 = $("badgeTopFollowing");
-  const b3 = $("badgeWorstRatio");
-  if (b1) b1.textContent = String(s.topByFollowers.length);
-  if (b2) b2.textContent = String(s.topByFollowing.length);
-  if (b3) b3.textContent = String(s.worstRatio.length);
-
-  show(topicsEl, true);
-  show(searchRow, true);
-
-  // Empty ranking lists → explain enrich / private accounts
-  if (
-    s.topByFollowers.length === 0 &&
-    s.topByFollowing.length === 0 &&
-    s.worstRatio.length === 0
-  ) {
-    const panel = $("panel-analytics");
-    if (panel) {
-      panel.replaceChildren();
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = t("analyticsNoCounts");
-      panel.appendChild(empty);
-    }
-    document.querySelectorAll("[data-analytics-topic]").forEach((btn) => {
-      const on = btn.dataset.analyticsTopic === state.analyticsTopic;
-      btn.classList.toggle("active", on);
-    });
-    return;
-  }
-
-  switchAnalyticsTopic(state.analyticsTopic);
-}
-
-function renderAnalyticsList() {
-  const panel = $("panel-analytics");
-  if (!panel || !window.IGAnalytics) return;
+  if (searchRow) show(searchRow, true);
   panel.replaceChildren();
 
-  const topic = getAnalyticsTopicMeta();
-  if (!topic) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = t("needAnalysisFirst");
-    panel.appendChild(empty);
-    return;
-  }
-
-  let rows = topic.rows || [];
-  const q = state.analyticsQuery.trim().toLowerCase();
-  if (q) {
-    rows = rows.filter(
-      (u) =>
-        u.username.toLowerCase().includes(q) ||
-        (u.fullName || "").toLowerCase().includes(q)
-    );
-  }
-
-  if (!rows.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = q ? t("noSearchResults") : t("emptyList");
-    panel.appendChild(empty);
-    return;
-  }
-
-  const frag = document.createDocumentFragment();
-  rows.forEach((u, i) => {
-    const row = document.createElement("div");
-    row.className = "user-card";
-
-    const link = document.createElement("a");
-    link.className = "user-link";
-    link.href = `https://www.instagram.com/${encodeURIComponent(u.username)}/`;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.title = t("openProfile", { user: u.username });
-
-    const idx = document.createElement("span");
-    idx.className = "rank-idx";
-    idx.textContent = String(i + 1);
-    link.appendChild(idx);
-    link.appendChild(buildAvatar(u));
-
-    const meta = document.createElement("div");
-    meta.className = "user-meta";
-    meta.innerHTML = `
-      <div class="name">@${escapeHtml(u.username)}</div>
-      <div class="full">${escapeHtml(u.fullName || "")}</div>
-    `;
-    link.appendChild(meta);
-    row.appendChild(link);
-
-    const actions = document.createElement("div");
-    actions.className = "user-actions";
-    const val = document.createElement("span");
-    val.className = "rank-val";
-    val.textContent = topic.value(u);
-    actions.appendChild(val);
-    row.appendChild(actions);
-    frag.appendChild(row);
-  });
-  panel.appendChild(frag);
-}
-
-function renderAnalytics() {
-  renderAnalyticsSummaryOnly();
+  const wrap = document.createElement("div");
+  wrap.className = "charts-grid";
+  wrap.appendChild(
+    buildChartCard(
+      t("chartFollowingTitle"),
+      s.followingSplit,
+      A.formatCount(s.followingCount),
+      t("following")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartFollowersTitle"),
+      s.followersSplit,
+      A.formatCount(s.followersCount),
+      t("followers")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartNetworkTitle"),
+      s.networkMix,
+      A.formatPct(s.mutualRate),
+      t("metricMutualRate")
+    )
+  );
+  panel.appendChild(wrap);
 }
 
 function exportAnalyticsList() {
-  const topic = getAnalyticsTopicMeta();
-  if (!topic) return;
-  let rows = topic.rows || [];
-  const q = state.analyticsQuery.trim().toLowerCase();
-  if (q) {
-    rows = rows.filter(
-      (u) =>
-        u.username.toLowerCase().includes(q) ||
-        (u.fullName || "").toLowerCase().includes(q)
-    );
-  }
+  if (!state.analyticsCache || !state.counts) return;
+  const s = state.analyticsCache;
   const payload = {
     exportedAt: new Date().toISOString(),
     section: "analytics",
-    topic: topic.key,
-    topicTitle: topic.title,
+    type: "relationship-charts",
     account: state.me,
-    query: state.analyticsQuery || null,
-    count: rows.length,
-    users: rows,
+    summary: {
+      following: s.followingCount,
+      followers: s.followersCount,
+      mutual: s.mutualCount,
+      notFollowingBack: s.notBackCount,
+      notFollowedByMe: s.notMeCount,
+      mutualRate: s.mutualRate,
+      notBackRate: s.notBackRate,
+      oneWayFollowerRate: s.oneWayFollowerRate,
+    },
+    charts: {
+      followingSplit: s.followingSplit,
+      followersSplit: s.followersSplit,
+      networkMix: s.networkMix,
+    },
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json",
@@ -499,7 +427,7 @@ function exportAnalyticsList() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `instagram-analytics-${topic.key}-${state.me?.username || "export"}.json`;
+  a.download = `instagram-analytics-charts-${state.me?.username || "export"}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1687,17 +1615,6 @@ document.querySelectorAll(".section-btn").forEach((btn) => {
 botSearchInput?.addEventListener("input", () => {
   state.botQuery = botSearchInput.value;
   renderBots();
-});
-
-document.querySelectorAll("[data-analytics-topic]").forEach((btn) => {
-  btn.addEventListener("click", () =>
-    switchAnalyticsTopic(btn.dataset.analyticsTopic)
-  );
-});
-
-$("analyticsSearchInput")?.addEventListener("input", (e) => {
-  state.analyticsQuery = e.target.value;
-  renderAnalyticsList();
 });
 
 $("analyticsExportBtn")?.addEventListener("click", () => exportAnalyticsList());

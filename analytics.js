@@ -106,7 +106,8 @@ function ratioFollowingToFollowers(u) {
 }
 
 /**
- * @param {object} state analysis state
+ * Charts + rates only from list data we already have
+ * (mutual / notBack / notMe / following / followers).
  */
 function buildAnalyticsSummary(state) {
   const following = state.following || [];
@@ -117,47 +118,44 @@ function buildAnalyticsSummary(state) {
 
   const fCount = following.length;
   const frCount = followers.length;
+  const mutualCount = mutual.length;
+  const notBackCount = notBack.length;
+  const notMeCount = notMe.length;
 
-  const mutualRate = fCount ? mutual.length / fCount : 0;
-  const notBackRate = fCount ? notBack.length / fCount : 0;
-  const oneWayFollowerRate = frCount ? notMe.length / frCount : 0;
+  const mutualRate = fCount ? mutualCount / fCount : 0;
+  const notBackRate = fCount ? notBackCount / fCount : 0;
+  const oneWayFollowerRate = frCount ? notMeCount / frCount : 0;
+  const mutualOfFollowers = frCount ? mutualCount / frCount : 0;
 
-  const withFollowers = following.filter((u) => num(u.followerCount) != null);
-  const withFollowing = following.filter((u) => num(u.followingCount) != null);
-  const withRatio = following.filter((u) => ratioFollowingToFollowers(u) != null);
-
-  const topByFollowers = [...withFollowers].sort(
-    (a, b) => (num(b.followerCount) || 0) - (num(a.followerCount) || 0)
-  );
-
-  const topByFollowing = [...withFollowing].sort(
-    (a, b) => (num(b.followingCount) || 0) - (num(a.followingCount) || 0)
-  );
-
-  const worstRatio = [...withRatio].sort(
-    (a, b) =>
-      (ratioFollowingToFollowers(b) || 0) - (ratioFollowingToFollowers(a) || 0)
-  );
-
-  const coverage = {
-    followingWithFollowerCount: withFollowers.length,
-    followingWithFollowingCount: withFollowing.length,
-    followingTotal: fCount,
-  };
+  // Doughnut datasets from known buckets only
+  const followingSplit = [
+    { key: "mutual", label: "mutual", value: mutualCount, color: "#3dd68c" },
+    { key: "notBack", label: "notBack", value: notBackCount, color: "#f5a524" },
+  ];
+  const followersSplit = [
+    { key: "mutual", label: "mutual", value: mutualCount, color: "#3dd68c" },
+    { key: "notMe", label: "notMe", value: notMeCount, color: "#6ea8fe" },
+  ];
+  // Unique-ish network view (three exclusive buckets for the relationship graph)
+  const networkMix = [
+    { key: "mutual", label: "mutual", value: mutualCount, color: "#3dd68c" },
+    { key: "notBack", label: "notBack", value: notBackCount, color: "#f5a524" },
+    { key: "notMe", label: "notMe", value: notMeCount, color: "#6ea8fe" },
+  ];
 
   return {
     mutualRate,
     notBackRate,
     oneWayFollowerRate,
-    topByFollowers,
-    topByFollowing,
-    worstRatio,
-    coverage,
-    mutualCount: mutual.length,
-    notBackCount: notBack.length,
-    notMeCount: notMe.length,
+    mutualOfFollowers,
+    mutualCount,
+    notBackCount,
+    notMeCount,
     followingCount: fCount,
     followersCount: frCount,
+    followingSplit,
+    followersSplit,
+    networkMix,
   };
 }
 
@@ -175,6 +173,76 @@ function formatPct(rate) {
   return `${Math.round(rate * 100)}%`;
 }
 
+/**
+ * Draw a doughnut chart on a canvas.
+ * @param {HTMLCanvasElement} canvas
+ * @param {{ value: number, color: string, label?: string }[]} segments
+ */
+function drawDoughnut(canvas, segments, options = {}) {
+  const dpr = window.devicePixelRatio || 1;
+  const cssSize = options.size || 140;
+  canvas.width = cssSize * dpr;
+  canvas.height = cssSize * dpr;
+  canvas.style.width = `${cssSize}px`;
+  canvas.style.height = `${cssSize}px`;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const cx = cssSize / 2;
+  const cy = cssSize / 2;
+  const outer = cssSize * 0.42;
+  const inner = outer * (options.hole ?? 0.58);
+  const total = segments.reduce((s, x) => s + Math.max(0, Number(x.value) || 0), 0);
+
+  ctx.clearRect(0, 0, cssSize, cssSize);
+
+  if (total <= 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+    ctx.arc(cx, cy, inner, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.fillStyle = "#2e2e3a";
+    ctx.fill();
+    ctx.fillStyle = "#9a9aab";
+    ctx.font = "600 11px Segoe UI, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("—", cx, cy);
+    return;
+  }
+
+  let angle = -Math.PI / 2;
+  for (const seg of segments) {
+    const v = Math.max(0, Number(seg.value) || 0);
+    if (v <= 0) continue;
+    const slice = (v / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+    ctx.arc(cx, cy, outer, angle, angle + slice);
+    ctx.arc(cx, cy, inner, angle + slice, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = seg.color || "#833ab4";
+    ctx.fill();
+    angle += slice;
+  }
+
+  // center label
+  if (options.centerText != null) {
+    ctx.fillStyle = "#f4f4f8";
+    ctx.font = "700 14px Segoe UI, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(options.centerText), cx, cy - 6);
+    if (options.centerSub) {
+      ctx.fillStyle = "#9a9aab";
+      ctx.font = "600 9px Segoe UI, system-ui, sans-serif";
+      ctx.fillText(String(options.centerSub), cx, cy + 10);
+    }
+  }
+}
+
 // Export for popup (classic script tags → globals)
 if (typeof window !== "undefined") {
   window.IGAnalytics = {
@@ -185,5 +253,6 @@ if (typeof window !== "undefined") {
     formatCount,
     formatPct,
     ratioFollowingToFollowers,
+    drawDoughnut,
   };
 }
