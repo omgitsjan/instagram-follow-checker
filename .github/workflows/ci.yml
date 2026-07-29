@@ -30,6 +30,7 @@ jobs:
           node --check content.js
           node --check popup.js
           node --check i18n.js
+          node --check analytics.js
 
       - name: Package extension zip (artifact)
         run: |
@@ -42,9 +43,11 @@ jobs:
             popup.js \
             popup.css \
             i18n.js \
+            analytics.js \
             icons \
             LICENSE \
-            README.md
+            README.md \
+            PRIVACY.md
           echo "ZIP=$ZIP" >> "$GITHUB_ENV"
           ls -la "$ZIP"
 
