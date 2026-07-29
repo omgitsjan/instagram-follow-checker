@@ -1259,7 +1259,12 @@ function onProgress(msg) {
   show(progressWrap, true);
   if (msg.stage === "user" && msg.me) {
     state.me = msg.me;
-    setHeaderAccount(msg.me);
+    if (msg.viewer) state.viewer = msg.viewer;
+    if (msg.impersonating != null) {
+      state.readOnly = Boolean(msg.impersonating);
+      state.impersonating = Boolean(msg.impersonating);
+    }
+    refreshHeaderDisplay();
     progressFill.style.width = "8%";
   }
   if (msg.stage === "following") {
