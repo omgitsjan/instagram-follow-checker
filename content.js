@@ -270,8 +270,13 @@ function mapMediaItem(item, fallbackAuthor = null) {
     "";
   const code = item.code || shortCodeFromId(item.pk ?? item.id ?? "");
   const id = String(item.pk ?? item.id ?? code);
-  const likeCount = item.like_count ?? item.like_and_view_counts_disabled ? null : item.like_count;
-  const commentCount = item.comment_count ?? null;
+  const likeCount = item.like_and_view_counts_disabled
+    ? null
+    : item.like_count != null
+      ? Number(item.like_count)
+      : null;
+  const commentCount =
+    item.comment_count != null ? Number(item.comment_count) : null;
   const playCount =
     item.play_count ?? item.ig_play_count ?? item.view_count ?? item.video_view_count ?? null;
 
