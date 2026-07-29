@@ -269,6 +269,7 @@ function renderBots() {
   for (const u of list.slice(0, 200)) {
     const row = document.createElement("div");
     row.className = "user-card";
+    row.dataset.userId = u.id;
 
     const link = document.createElement("a");
     link.className = "user-link";
@@ -278,9 +279,14 @@ function renderBots() {
     link.appendChild(buildAvatar(u));
     const meta = document.createElement("div");
     meta.className = "user-meta";
+    const iFollow = state.following.some((x) => x.id === u.id);
     const sub = [
-      u.followerCount != null ? `${window.IGAnalytics.formatCount(u.followerCount)} fl.` : null,
-      u.followingCount != null ? `${window.IGAnalytics.formatCount(u.followingCount)} fg.` : null,
+      u.followerCount != null
+        ? `${window.IGAnalytics.formatCount(u.followerCount)} fl.`
+        : null,
+      u.followingCount != null
+        ? `${window.IGAnalytics.formatCount(u.followingCount)} fg.`
+        : null,
       (u.botReasons || []).slice(0, 2).join(", "),
     ]
       .filter(Boolean)
@@ -289,11 +295,44 @@ function renderBots() {
     link.appendChild(meta);
     row.appendChild(link);
 
+    const actions = document.createElement("div");
+    actions.className = "user-actions";
+
     const pill = document.createElement("span");
     pill.className =
       "score-pill " + (u.botScore >= 55 ? "high" : u.botScore >= 30 ? "mid" : "low");
     pill.textContent = t("botScore", { n: u.botScore });
-    row.appendChild(pill);
+    actions.appendChild(pill);
+
+    // Remove from your followers (they no longer follow you)
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn action remove-follower";
+    removeBtn.textContent = t("removeFollower");
+    removeBtn.title = t("removeFollowerUser", { user: u.username });
+    removeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleFriendship(u, "remove_follower", "bots", removeBtn, row);
+    });
+    actions.appendChild(removeBtn);
+
+    // Unfollow if you follow them
+    if (iFollow) {
+      const unf = document.createElement("button");
+      unf.type = "button";
+      unf.className = "btn action unfollow";
+      unf.textContent = t("unfollow");
+      unf.title = t("unfollowUser", { user: u.username });
+      unf.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleFriendship(u, "unfollow", "bots", unf, row);
+      });
+      actions.appendChild(unf);
+    }
+
+    row.appendChild(actions);
     frag.appendChild(row);
   }
   panel.appendChild(frag);
@@ -653,6 +692,37 @@ async function handleFriendship(u, action, listKey, btn, row) {
       return;
     }
 
+    if (action === "remove_follower") {
+      // They no longer follow you
+      removeUserFromLists(u.id, ["followers", "mutual", "notMe", "notFollowedByMe"]);
+      // If you still follow them → not following back
+      if (state.following.some((x) => x.id === u.id)) {
+        if (!state.notFollowingBack.some((x) => x.id === u.id)) {
+          state.notFollowingBack.push(u);
+          state.notFollowingBack.sort((a, b) =>
+            a.username.localeCompare(b.username, undefined, {
+              sensitivity: "base",
+            })
+          );
+        }
+      }
+      if (state.counts) {
+        state.counts.followers = state.followers.length;
+        state.counts.mutual = state.mutual.length;
+        state.counts.notFollowedByMe = state.notFollowedByMe.length;
+        state.counts.notFollowingBack = state.notFollowingBack.length;
+      }
+      setStatus(t("followerRemoved", { user: escapeHtml(u.username) }), "ok");
+      row.classList.add("removing");
+      setTimeout(() => {
+        row.remove();
+        refreshPanelsAfterAction();
+      }, 180);
+      updateBadgesAndStats();
+      persistState();
+      return;
+    }
+
     if (action === "unfollow") {
       // Remove from following-related lists; keep on followers if they still follow
       removeUserFromLists(u.id, ["following", "mutual", "notBack"]);
@@ -674,6 +744,13 @@ async function handleFriendship(u, action, listKey, btn, row) {
         }
       }
       setStatus(t("unfollowed", { user: escapeHtml(u.username) }), "ok");
+      // From bots list: stay visible (still a follower) but drop unfollow control
+      if (listKey === "bots") {
+        updateBadgesAndStats();
+        persistState();
+        renderBots();
+        return;
+      }
     } else {
       // follow: add to following; if they follow you → mutual, else notBack
       if (!state.following.some((x) => x.id === u.id)) {

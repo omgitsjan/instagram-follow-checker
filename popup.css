@@ -580,6 +580,30 @@ h1 {
   color: #c4dbff;
 }
 
+.btn.action.remove-follower {
+  background: rgba(245, 165, 36, 0.14);
+  color: #ffc857;
+  border: 1px solid rgba(245, 165, 36, 0.4);
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+.btn.action.remove-follower:hover:not(:disabled) {
+  background: rgba(245, 165, 36, 0.24);
+  color: #ffd98a;
+}
+
+/* Bot rows: tighter action cluster */
+#panel-bots .user-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 46%;
+}
+
+#panel-bots .user-card {
+  align-items: flex-start;
+}
+
 .btn.action.done {
   background: var(--surface-2);
   color: var(--muted);

@@ -56,29 +56,57 @@ async function igFetch(url, options = {}) {
   return res.json();
 }
 
-/** Follow / unfollow via the same web endpoints as Instagram.com */
+/** Follow / unfollow / remove follower via Instagram web endpoints */
 async function friendshipAction(userId, action) {
-  // action: "create" (follow) | "destroy" (unfollow)
-  const url = `https://www.instagram.com/api/v1/friendships/${action}/${userId}/`;
-  const data = await igFetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      "x-instagram-ajax": "1",
-    },
-    body: "",
-  });
+  // action: "create" | "destroy" | "remove_follower"
+  let url;
+  if (action === "remove_follower") {
+    // Web UI: remove someone from your followers
+    url = `https://www.instagram.com/api/v1/web/friendships/${userId}/remove_follower/`;
+  } else {
+    url = `https://www.instagram.com/api/v1/friendships/${action}/${userId}/`;
+  }
+
+  let data;
+  try {
+    data = await igFetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        "x-instagram-ajax": "1",
+      },
+      body: "",
+    });
+  } catch (err) {
+    // Fallback path used by some IG web builds
+    if (action === "remove_follower") {
+      data = await igFetch(
+        `https://www.instagram.com/api/v1/friendships/remove_follower/${userId}/`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            "x-instagram-ajax": "1",
+          },
+          body: "",
+        }
+      );
+    } else {
+      throw err;
+    }
+  }
 
   if (data?.status && data.status !== "ok") {
     throw new Error(data.message || `Action failed (${data.status})`);
   }
 
-  // friendship_status.following / outgoing_request
+  // friendship_status.following / outgoing_request / followed_by
   const fs = data?.friendship_status || {};
   return {
     ok: true,
     following: Boolean(fs.following),
     outgoingRequest: Boolean(fs.outgoing_request),
+    followedBy: fs.followed_by === undefined ? undefined : Boolean(fs.followed_by),
     raw: data,
   };
 }
@@ -368,13 +396,17 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 
   if (msg?.type === "FRIENDSHIP") {
-    // action: "follow" | "unfollow"
+    // action: "follow" | "unfollow" | "remove_follower"
     (async () => {
       try {
         const userId = String(msg.userId || "");
         if (!userId) throw new Error("No user id.");
-        const action = msg.action === "follow" ? "create" : "destroy";
-        const result = await friendshipAction(userId, action);
+        let apiAction = "destroy";
+        if (msg.action === "follow") apiAction = "create";
+        else if (msg.action === "unfollow") apiAction = "destroy";
+        else if (msg.action === "remove_follower") apiAction = "remove_follower";
+        else throw new Error(`Unknown friendship action: ${msg.action}`);
+        const result = await friendshipAction(userId, apiAction);
         sendResponse({ ok: true, ...result });
       } catch (err) {
         sendResponse({ ok: false, error: err?.message || String(err) });

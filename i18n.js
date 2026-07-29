@@ -90,6 +90,9 @@ const I18N = {
     botScore: "Score {n}",
     botNeedFollowers: "No followers loaded yet.",
     coverageNote: "{have}/{total} following have public counts",
+    removeFollower: "Remove",
+    removeFollowerUser: "Remove @{user} from your followers",
+    followerRemoved: "Removed <strong>@{user}</strong> from your followers.",
   },
   de: {
     appTitle: "Follow Checker",
@@ -180,6 +183,9 @@ const I18N = {
     botScore: "Score {n}",
     botNeedFollowers: "Noch keine Follower geladen.",
     coverageNote: "{have}/{total} Following mit öffentlichen Zählern",
+    removeFollower: "Entfernen",
+    removeFollowerUser: "@{user} aus deinen Followern entfernen",
+    followerRemoved: "<strong>@{user}</strong> folgt dir nicht mehr (entfernt).",
   },
 };
 
