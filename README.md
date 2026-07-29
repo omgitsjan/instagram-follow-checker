@@ -3,75 +3,75 @@
 [![CI](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-**Chrome-Extension** (Manifest V3), die anzeigt:
+Chrome extension (**Manifest V3**) that shows your Instagram follow relationships using **your existing browser session** — no official API, no paywall, no backend.
 
-| Tab | Bedeutung |
-|-----|-----------|
-| **Gegenseitig** | Du folgst ihnen und sie folgen dir |
-| **Folgt nicht zurück** | Du folgst ihnen, sie dir nicht → optional **Entfolgen** |
-| **Ich folge nicht** | Sie folgen dir, du ihnen nicht → optional **Folgen** |
+| View | Meaning |
+|------|---------|
+| **Following** / **Followers** | Full lists (click the top tiles) |
+| **Mutual** | You follow them and they follow you |
+| **Not following back** | You follow them; they don’t follow you → optional **Unfollow** |
+| **You don’t follow** | They follow you; you don’t follow them → optional **Follow** |
 
-Keine offizielle Instagram-API, keine Paywall, keine externen Server. Die Extension nutzt nur **deine bereits eingeloggte Browser-Session** auf `instagram.com`.
+> **Vibe-coded.** Built exploratively with AI — not production/enterprise software. Expect rough edges, Instagram breaking changes, and no support guarantee.
 
-> **Vibe-coded.** Dieses Projekt wurde explorativ mit KI gebaut – nicht als Produktions- oder Enterprise-Software. Erwarte Ecken und Kanten, Breaking Changes von Instagram und null Support-Garantie.
+**UI language:** English by default. **German** is supported via **Settings** (gear icon).
 
 ---
 
-## ⚠️ Wichtiger Hinweis / Risk Disclaimer
+## Important disclaimer
 
-**Lies das, bevor du die Extension installierst oder nutzt.**
+**Read this before installing or using the extension.**
 
-### Keine Haftung
+### No warranty / no liability
 
-- Dieses Projekt wird **„as is“ / wie besehen** bereitgestellt, **ohne jegliche Gewährleistung** (weder ausdrücklich noch stillschweigend).
-- Die Autoren und Mitwirkenden übernehmen **keine Haftung** für:
-  - Account-Sperren, -Einschränkungen oder -Löschungen
-  - verlorene Follower, Datenverlust oder sonstige Schäden
-  - rechtliche oder wirtschaftliche Folgen deiner Nutzung
-- Nutzung **auf eigenes Risiko**.
+- Provided **“as is”**, without warranty of any kind (express or implied).
+- Authors and contributors are **not liable** for account restrictions, bans, lost followers, data loss, or any damages.
+- Use **at your own risk**.
 
-### Instagram Terms of Service / Automatisierung
+### Instagram Terms of Service / automation
 
-Dieses Tool greift **nicht** auf die offizielle Instagram Graph API zu. Es liest und steuert Daten über die **Web-Oberfläche bzw. interne Web-Endpunkte**, die die Website selbst nutzt (Session-Cookies im Browser).
+This tool does **not** use the official Instagram Graph API. It loads data through the same kind of web session / internal web endpoints the Instagram website uses (cookies in your browser).
 
-Das kann gegen die **Nutzungsbedingungen von Instagram / Meta** verstoßen, insbesondere soweit dort untersagt sind:
+That may conflict with **Instagram / Meta Terms of Use**, especially where they prohibit:
 
-- automatisierter Zugriff, Scraping oder inoffizielle Clients  
-- massenhaftes Folgen / Entfolgen  
-- Verhalten, das wie Bots oder Skripte wirkt  
+- automated access, scraping, or unofficial clients  
+- bulk follow / unfollow  
+- bot-like behaviour  
 
-**Mögliche Folgen** (je nach Nutzung und Instagram-Policy, ohne Anspruch auf Vollständigkeit):
+**Possible outcomes** (depending on usage and Instagram’s systems):
 
-- temporäre Action-Blocks („Bitte warte ein paar Minuten…“)
-- eingeschränkte Funktionen
-- **Account-Sperre oder dauerhafte Bannung**
-- weitere Maßnahmen nach Ermessen von Meta/Instagram
+- temporary action blocks  
+- limited features  
+- **account restriction or permanent ban**  
 
-**Empfehlung:**
+**Recommendations:**
 
-- nur mit einem Account nutzen, den du dir „leisten“ kannst zu riskieren  
-- **nicht** hunderte Follow/Unfollow-Aktionen am Stück  
-- Pausen einhalten, wenn Instagram drosselt (HTTP 429)  
-- diese Software **nicht** für Spam, Harassment oder kommerzielle Massenaktionen einsetzen  
+- only use an account you can afford to risk  
+- do **not** mass-follow or mass-unfollow  
+- pause if you hit rate limits (e.g. HTTP 429)  
+- do not use this for spam, harassment, or commercial bulk abuse  
 
-Dieses Repo ist **kein** Ratschlag, ToS zu umgehen. Es ist ein technisches Hobby-/Lernprojekt. **Du** bist für die Einhaltung der Regeln von Instagram und geltendem Recht verantwortlich.
+This repo is **not** advice to circumvent ToS. You are responsible for complying with Instagram/Meta rules and applicable law.
 
-### Keine offizielle Verbindung
+### Not affiliated
 
-- **Nicht** von Meta, Instagram oder verbundenen Unternehmen.
-- **Nicht** im Chrome Web Store freigegeben (lokal / unpacked).
-- Interne Endpunkte von Instagram können **jederzeit** brechen.
+- **Not** affiliated with Meta, Instagram, or related companies  
+- Unofficial tool  
+- Internal Instagram endpoints can break at any time  
 
 ---
 
 ## Features
 
-- 3 Listen: gegenseitig / folgt nicht zurück / ich folge nicht  
-- Profilbilder (mit Fallback über den Instagram-Tab)  
-- **Entfolgen** im Tab „Folgt nicht zurück“  
-- **Folgen** im Tab „Ich folge nicht“ (private Accounts → oft „Angefragt“)  
-- Suche, JSON-Export, letztes Ergebnis im lokalen Storage  
-- alles lokal im Browser – **kein** Backend  
+- Full **Following** and **Followers** lists (clickable top tiles)  
+- Relationship tabs: mutual / not following back / you don’t follow  
+- Profile pictures (with fallback via the Instagram tab)  
+- **Unfollow** / **Follow** actions from the popup  
+- Search and JSON export  
+- Last result cached locally in the browser  
+- **English** default UI + **German** in Settings  
+- Settings: language, open-source link, PayPal tip  
+- Everything local — **no** developer backend  
 
 ---
 
@@ -79,99 +79,109 @@ Dieses Repo ist **kein** Ratschlag, ToS zu umgehen. Es ist ein technisches Hobby
 
 - Privacy policy: [PRIVACY.md](./PRIVACY.md)  
 - Public URL (Chrome Web Store): https://github.com/omgitsjan/instagram-follow-checker/blob/main/PRIVACY.md  
-- Store form answers (DE/EN): [`store/chrome-web-store-form-answers-de.txt`](./store/chrome-web-store-form-answers-de.txt)
+- Store form answers: [`store/chrome-web-store-form-answers-en.txt`](./store/chrome-web-store-form-answers-en.txt) · [`store/chrome-web-store-form-answers-de.txt`](./store/chrome-web-store-form-answers-de.txt)
 
-The extension processes Instagram relationship data **locally in your browser** only. No analysis data is sent to the developer’s servers.
+Relationship data is processed **locally in your browser**. Analysis results are not sent to the developer’s servers.
 
 ---
 
 ## Installation (unpacked)
 
-### Variante A – Release-ZIP (empfohlen)
+### Option A – Release ZIP (recommended)
 
-1. Neueste Version unter **[Releases](https://github.com/omgitsjan/instagram-follow-checker/releases)** laden  
-   (z. B. [`instagram-follow-checker-v1.0.0.zip`](https://github.com/omgitsjan/instagram-follow-checker/releases/download/v1.0.0/instagram-follow-checker-v1.0.0.zip))  
-2. ZIP entpacken  
-3. Chrome → `chrome://extensions` → **Entwicklermodus** → **Entpackte Erweiterung laden**  
-4. Den **entpackten Ordner** wählen  
-5. [instagram.com](https://www.instagram.com) öffnen (eingeloggt) → Extension-Icon → **Analyse starten**
+1. Download the latest **[Release](https://github.com/omgitsjan/instagram-follow-checker/releases)**  
+   (e.g. [`instagram-follow-checker-v1.0.0.zip`](https://github.com/omgitsjan/instagram-follow-checker/releases/download/v1.0.0/instagram-follow-checker-v1.0.0.zip))  
+2. Unzip  
+3. Chrome → `chrome://extensions` → **Developer mode** → **Load unpacked**  
+4. Select the **unzipped folder**  
+5. Open [instagram.com](https://www.instagram.com) (logged in) → extension icon → **Start analysis**
 
-### Variante B – aus dem Repo
+### Option B – From the repo
 
-1. Repo klonen  
-2. wie oben ab Schritt 3, Ordner des Repos laden  
+1. Clone the repository  
+2. Load the project folder as an unpacked extension (steps 3–5 above)  
 
-Nach Code-Updates: auf der Extensions-Seite **Aktualisieren**, Instagram-Tab neu laden.
+After code updates: click **Reload** on the extensions page and refresh the Instagram tab.
 
----
+**Tip:** Package with valid timestamps (avoids “Updated 1 Jan 1970” in the store):
 
-## Nutzung
-
-1. Auf Instagram eingeloggt bleiben (Tab offen).  
-2. Analyse starten und warten (bei vielen Followern dauert es – es gibt Pausen zwischen den Seiten).  
-3. Tabs durchschauen, optional Folgen/Entfolgen.  
-4. Bei Fehlern (429, Login): warten, neu laden, erneut versuchen.  
+```bash
+node scripts/package-zip.mjs
+```
 
 ---
 
-## Technik (kurz)
+## Usage
 
-| Teil | Rolle |
-|------|--------|
-| `manifest.json` | MV3, Host-Permissions für Instagram + CDN |
-| `content.js` | läuft auf `instagram.com`, holt Listen, Follow/Unfollow |
-| `popup.*` | UI mit Tabs, Suche, Aktionen |
-
-Daten bleiben im Browser (`chrome.storage.local` fürs letzte Ergebnis). Es werden **keine** Analyse-Daten an die Autoren dieses Repos gesendet.
-
----
-
-## Einschränkungen
-
-- Instagram ändert APIs/DOM → Extension kann **plötzlich** nicht mehr funktionieren  
-- Rate-Limits / Blocks möglich  
-- Sehr große Accounts = lange Laufzeit  
-- Kein Multi-Account-Manager, kein Auto-Unfollow-Bot im Hintergrund  
+1. Stay logged in on Instagram (tab open).  
+2. Start analysis and wait (large accounts take longer; requests are paced).  
+3. Use top tiles for full lists, bottom tabs for relationship breakdown.  
+4. Optionally follow/unfollow; use search or export.  
+5. On errors (429, login): wait, reload, try again.  
+6. **Settings** → switch **English / Deutsch**, open GitHub, or tip via PayPal.  
 
 ---
 
-## CI / Pipeline
+## Project structure
 
-Ja, sinnvoll – aber **schlank**, weil es **keinen Build** (kein npm/Webpack) und keinen Store-Deploy gibt.
+| File | Role |
+|------|------|
+| `manifest.json` | MV3, Instagram + CDN host permissions |
+| `content.js` | Runs on `instagram.com`, loads lists, follow/unfollow |
+| `popup.*` | UI: tiles, tabs, search, actions |
+| `i18n.js` | English + German strings |
+| `PRIVACY.md` | Privacy policy |
+| `store/` | Chrome Web Store assets & form answers |
 
-| Workflow | Wann | Was |
-|----------|------|-----|
-| **CI** (`ci.yml`) | Push/PR auf `main` | Manifest & Dateien prüfen, JS-Syntax, ZIP-Artifact |
-| **Release** (`release.yml`) | Tag `v*` (z. B. `v1.0.0`) | Validieren, Version = Tag, GitHub Release + ZIP |
+Data stays in the browser (`chrome.storage.local` for language + last result).
 
-Lokal prüfen:
+---
+
+## Limitations
+
+- Instagram API/DOM changes can break the extension overnight  
+- Rate limits / action blocks are possible  
+- Very large accounts mean long runtimes  
+- No multi-account manager, no background auto-unfollow bot  
+
+---
+
+## CI / releases
+
+Lightweight pipeline (no app bundler, no Web Store deploy in CI):
+
+| Workflow | When | What |
+|----------|------|------|
+| **CI** (`ci.yml`) | Push/PR on `main` | Validate structure, JS syntax, ZIP artifact |
+| **Release** (`release.yml`) | Tag `v*` (e.g. `v1.0.0`) | Validate, tag = manifest version, GitHub Release + ZIP |
+
+Local checks:
 
 ```bash
 node scripts/validate-extension.mjs
 node --check content.js
 node --check popup.js
+node --check i18n.js
 ```
 
-Release-Beispiel (Version in `manifest.json` zuerst anheben):
+Release example (bump `manifest.json` version first):
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-**Nicht** in der Pipeline: Chrome Web Store Upload (braucht Secrets, Review, und passt schlecht zu einem ToS-sensiblen Hobby-Tool).
-
 ---
 
-## Lizenz
+## License
 
-[MIT](./LICENSE) – plus die **Disclaimer** oben: Nutzung auf eigene Gefahr, **keine Haftung**, insbesondere nicht für Account-Maßnahmen durch Instagram/Meta.
+[MIT](./LICENSE) — plus the **disclaimers** above: use at your own risk; **no liability**, especially for Instagram/Meta account actions.
 
 ---
 
 ## Contributing
 
-PRs willkommen, aber ohne Garantie auf Review-Zeit. Bitte **keine** Features, die aggressives Massen-Spam-Verhalten erleichtern.
+PRs welcome, no guarantee on review time. Please **do not** add features aimed at aggressive mass spam or bulk abuse.
 
 ---
 
@@ -180,4 +190,4 @@ PRs willkommen, aber ohne Garantie auf Review-Zeit. Bitte **keine** Features, di
 - Vibe-coded with AI assistance  
 - Author: [omgitsjan](https://github.com/omgitsjan)  
 
-Wenn dir das hilft: Stern am Repo reicht als Danke. Bleib fair zu anderen Accounts – und lies die Warnings nochmal. ✌️
+If this helps you: a star on the repo is enough. Be fair to other accounts — and read the warnings again.
