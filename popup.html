@@ -44,108 +44,112 @@
       </button>
     </header>
 
-    <!-- Settings panel -->
-    <div id="settingsPanel" class="settings-panel hidden" role="dialog" aria-labelledby="settingsTitle">
-      <div class="settings-head">
-        <h2 id="settingsTitle" data-i18n="settingsTitle">Settings</h2>
-        <button id="settingsClose" class="btn icon-btn" type="button" data-i18n-title="close" title="Close">
-          ✕
-        </button>
-      </div>
-
-      <div class="settings-block">
-        <label class="settings-label" for="langSelect" data-i18n="language">Language</label>
-        <div class="lang-switch" role="group" aria-label="Language">
-          <button type="button" class="lang-btn active" data-lang="en" id="langEn">
-            <!-- SVG flags (Windows often can't render flag emoji) -->
-            <span class="lang-flag" aria-hidden="true">
-              <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
-                <rect width="60" height="40" fill="#012169"/>
-                <path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/>
-                <path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="5"/>
-                <path d="M30,0 V40 M0,20 H60" stroke="#fff" stroke-width="14"/>
-                <path d="M30,0 V40 M0,20 H60" stroke="#C8102E" stroke-width="8"/>
-              </svg>
-            </span>
-            <span>English</span>
+    <!-- Settings full page -->
+    <div id="settingsPanel" class="settings-page hidden" role="dialog" aria-labelledby="settingsTitle">
+      <div class="settings-page-inner">
+        <div class="settings-head">
+          <button id="settingsClose" class="btn ghost settings-back" type="button" data-i18n="settingsBack">
+            ← Back
           </button>
-          <button type="button" class="lang-btn" data-lang="de" id="langDe">
-            <span class="lang-flag" aria-hidden="true">
-              <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
-                <rect width="60" height="13.33" y="0" fill="#000"/>
-                <rect width="60" height="13.33" y="13.33" fill="#D00"/>
-                <rect width="60" height="13.34" y="26.66" fill="#FFCE00"/>
-              </svg>
-            </span>
-            <span>Deutsch</span>
-          </button>
+          <h2 id="settingsTitle" data-i18n="settingsTitle">Settings</h2>
         </div>
-      </div>
 
-      <div class="settings-block">
-        <label class="settings-label" data-i18n="impersonator">Impersonator</label>
-        <p class="settings-help" data-i18n="impersonatorHelp">
-          View another public account’s follow stats (read-only). Your login is still used for the session.
-        </p>
-        <label class="toggle-row">
-          <input type="checkbox" id="impersonatorToggle" />
-          <span data-i18n="impersonatorEnable">Enable Impersonator mode</span>
-        </label>
-        <div id="impersonatorForm" class="impersonator-form hidden">
-          <input
-            id="impersonatorUsername"
-            type="text"
-            class="settings-input"
-            data-i18n-placeholder="impersonatorPlaceholder"
-            placeholder="@username"
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button
-            type="button"
-            id="impersonatorSubmit"
-            class="btn primary"
-            data-i18n="impersonatorSubmit"
-          >
-            Load account
-          </button>
-          <p id="impersonatorStatus" class="impersonator-status" role="status"></p>
+        <div class="settings-scroll">
+          <div class="settings-block">
+            <label class="settings-label" for="langSelect" data-i18n="language">Language</label>
+            <div class="lang-switch" role="group" aria-label="Language">
+              <button type="button" class="lang-btn active" data-lang="en" id="langEn">
+                <span class="lang-flag" aria-hidden="true">
+                  <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="40" fill="#012169"/>
+                    <path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/>
+                    <path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="5"/>
+                    <path d="M30,0 V40 M0,20 H60" stroke="#fff" stroke-width="14"/>
+                    <path d="M30,0 V40 M0,20 H60" stroke="#C8102E" stroke-width="8"/>
+                  </svg>
+                </span>
+                <span>English</span>
+              </button>
+              <button type="button" class="lang-btn" data-lang="de" id="langDe">
+                <span class="lang-flag" aria-hidden="true">
+                  <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="13.33" y="0" fill="#000"/>
+                    <rect width="60" height="13.33" y="13.33" fill="#D00"/>
+                    <rect width="60" height="13.34" y="26.66" fill="#FFCE00"/>
+                  </svg>
+                </span>
+                <span>Deutsch</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-block">
+            <label class="settings-label" data-i18n="impersonator">Impersonator</label>
+            <p class="settings-help" data-i18n="impersonatorHelp">
+              View another public account’s follow stats (read-only). Your login is still used for the session.
+            </p>
+            <label class="toggle-row">
+              <input type="checkbox" id="impersonatorToggle" />
+              <span data-i18n="impersonatorEnable">Enable Impersonator mode</span>
+            </label>
+            <div id="impersonatorForm" class="impersonator-form hidden">
+              <input
+                id="impersonatorUsername"
+                type="text"
+                class="settings-input"
+                data-i18n-placeholder="impersonatorPlaceholder"
+                placeholder="@username"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button
+                type="button"
+                id="impersonatorSubmit"
+                class="btn primary"
+                data-i18n="impersonatorSubmit"
+              >
+                Load account
+              </button>
+              <p id="impersonatorStatus" class="impersonator-status" role="status"></p>
+            </div>
+          </div>
+
+          <div class="settings-block">
+            <a
+              id="repoLink"
+              class="settings-link"
+              href="https://github.com/omgitsjan/instagram-follow-checker"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="settings-link-icon" aria-hidden="true">⟨/⟩</span>
+              <span>
+                <strong data-i18n="openSource">Open source</strong>
+                <small data-i18n="openSourceDesc">View code on GitHub</small>
+              </span>
+            </a>
+          </div>
+
+          <div class="settings-block">
+            <a
+              id="tipLink"
+              class="settings-link tip"
+              href="https://www.paypal.com/paypalme/IanPRTZ"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="settings-link-icon" aria-hidden="true">♥</span>
+              <span>
+                <strong data-i18n="tipMe">Tip me</strong>
+                <small data-i18n="tipMeDesc">Support via PayPal</small>
+              </span>
+            </a>
+          </div>
         </div>
-      </div>
-
-      <div class="settings-block">
-        <a
-          id="repoLink"
-          class="settings-link"
-          href="https://github.com/omgitsjan/instagram-follow-checker"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span class="settings-link-icon" aria-hidden="true">⟨/⟩</span>
-          <span>
-            <strong data-i18n="openSource">Open source</strong>
-            <small data-i18n="openSourceDesc">View code on GitHub</small>
-          </span>
-        </a>
-      </div>
-
-      <div class="settings-block">
-        <a
-          id="tipLink"
-          class="settings-link tip"
-          href="https://www.paypal.com/paypalme/IanPRTZ"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span class="settings-link-icon" aria-hidden="true">♥</span>
-          <span>
-            <strong data-i18n="tipMe">Tip me</strong>
-            <small data-i18n="tipMeDesc">Support via PayPal</small>
-          </span>
-        </a>
       </div>
     </div>
 
+    <div id="appMain" class="app-main">
     <div id="impersonatorBanner" class="impersonator-banner hidden" role="status">
       <strong data-i18n="impersonatorBannerTitle">Impersonator · read-only</strong>
       <span id="impersonatorBannerUser"></span>
@@ -208,7 +212,7 @@
       </button>
       <button
         type="button"
-        class="section-btn secret-tab hidden"
+        class="section-btn"
         data-section="admire"
         id="navAdmire"
         data-i18n="navAdmire"
@@ -346,19 +350,30 @@
         <div class="coming-soon-badge" data-i18n="comingSoon">Coming soon</div>
         <h3 data-i18n="postsComingTitle">Post insights</h3>
         <p data-i18n="postsComingBody">
-          Ranking your posts and who likes them most is in the works. Instagram’s web APIs for this are unstable right now.
+          Ranking your posts by likes/comments and seeing who likes you most often.
         </p>
+        <ul class="coming-soon-list">
+          <li data-i18n="postsSoon1">Your posts ranked by engagement</li>
+          <li data-i18n="postsSoon2">Top fans by how many of your posts they liked</li>
+          <li data-i18n="postsSoon3">Recency-aware ranking when like counts are equal</li>
+        </ul>
       </div>
     </div>
 
-    <!-- Secret Admire — coming soon (unlock: click logo 5×) -->
+    <!-- Admire — coming soon -->
     <div id="section-admire" class="section-body hidden">
       <div class="coming-soon">
         <div class="coming-soon-badge" data-i18n="comingSoon">Coming soon</div>
-        <h3 data-i18n="admireComingTitle">Secret admirers</h3>
+        <h3 data-i18n="admireComingTitle">Admirers &amp; silent viewers</h3>
         <p data-i18n="admireComingBody">
-          Who engages with you the most without always following back — planned for a future update.
+          See who watches you without always following — via session-only story &amp; highlight data when Instagram allows it.
         </p>
+        <ul class="coming-soon-list">
+          <li data-i18n="admireSoon1">Current story viewers (who watched your active stories)</li>
+          <li data-i18n="admireSoon2">Highlight viewers (who watched story highlights)</li>
+          <li data-i18n="admireSoon3">People who view/like you but don’t follow (when lists are available without extra API keys)</li>
+          <li data-i18n="admireSoon4">Repeat viewers ranked higher than one-time visitors</li>
+        </ul>
       </div>
     </div>
 
@@ -368,6 +383,7 @@
         Private accounts → “Requested” instead of instant follow.
       </p>
     </footer>
+    </div><!-- /#appMain -->
 
     <script src="i18n.js"></script>
     <script src="analytics.js"></script>

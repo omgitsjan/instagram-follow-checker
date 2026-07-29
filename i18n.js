@@ -101,13 +101,21 @@ const I18N = {
     navPosts: "Posts",
     navAdmire: "Admire",
     comingSoon: "Coming soon",
+    settingsBack: "← Back",
     postsComingTitle: "Post insights",
     postsComingBody:
-      "Ranking your posts and who likes them most is in the works. Instagram’s web APIs for this are unstable right now.",
-    admireComingTitle: "Secret admirers",
+      "Deep post analytics from your session (no official API) — planned next.",
+    postsSoon1: "Your posts ranked by likes & comments",
+    postsSoon2: "Top fans by how many of your posts they liked",
+    postsSoon3: "When counts are equal, newer interactions win",
+    admireComingTitle: "Admirers & silent viewers",
     admireComingBody:
-      "Who engages with you the most without always following back — planned for a future update.",
-    admireUnlocked: "Secret tab unlocked: Admire 👀",
+      "See who watches and engages with you — including people who don’t follow you — when Instagram exposes that data to the web session.",
+    admireSoon1: "Current story viewers (who watched your active stories)",
+    admireSoon2: "Highlight viewers (who watched story highlights)",
+    admireSoon3:
+      "Viewers/likers who don’t follow you (session-only, no Graph API keys)",
+    admireSoon4: "Repeat viewers ranked above one-time visitors",
     analyticsNoCounts:
       "No public follower/following counts yet. Wait until analysis finishes enriching profiles (progress bar), or accounts are private/restricted.",
     analyticsHint:
@@ -236,13 +244,21 @@ const I18N = {
     navPosts: "Posts",
     navAdmire: "Admire",
     comingSoon: "Demnächst",
+    settingsBack: "← Zurück",
     postsComingTitle: "Post-Insights",
     postsComingBody:
-      "Ranking deiner Posts und wer sie am meisten liked ist in Arbeit. Die Instagram-Web-APIs dafür sind gerade unzuverlässig.",
-    admireComingTitle: "Heimliche Bewunderer",
+      "Tiefe Post-Analysen über deine Session (ohne offizielle API) — als Nächstes geplant.",
+    postsSoon1: "Deine Posts nach Likes & Kommentaren gerankt",
+    postsSoon2: "Top-Fans nach Anzahl gelikter Posts von dir",
+    postsSoon3: "Bei Gleichstand gewinnen neuere Interaktionen",
+    admireComingTitle: "Bewunderer & stille Viewer",
     admireComingBody:
-      "Wer am meisten mit dir interagiert, ohne immer zurückzufolgen — geplant für ein späteres Update.",
-    admireUnlocked: "Geheimer Tab freigeschaltet: Admire 👀",
+      "Wer dich anschaut und mit dir interagiert — auch ohne zu folgen — sobald Instagram das der Web-Session zeigt.",
+    admireSoon1: "Aktuelle Story-Viewer (wer deine aktiven Stories gesehen hat)",
+    admireSoon2: "Highlight-Viewer (wer Story-Highlights gesehen hat)",
+    admireSoon3:
+      "Viewer/Liker, die dir nicht folgen (nur Session, keine Graph-API-Keys)",
+    admireSoon4: "Wiederholte Viewer höher als Einmal-Besucher",
     analyticsNoCounts:
       "Noch keine öffentlichen Follower-/Following-Zahlen. Warte bis die Analyse Profile anreichert (Fortschrittsbalken), oder Accounts sind privat/eingeschränkt.",
     analyticsHint:

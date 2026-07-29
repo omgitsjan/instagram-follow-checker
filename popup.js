@@ -16,6 +16,7 @@ const headerLogo = $("headerLogo");
 const settingsBtn = $("settingsBtn");
 const settingsPanel = $("settingsPanel");
 const settingsClose = $("settingsClose");
+const appMain = $("appMain");
 
 const state = {
   me: null,
@@ -129,8 +130,6 @@ const SECTIONS = ["relationships", "analytics", "bots", "liked", "admire"];
 const sectionNav = $("sectionNav");
 const botSearchInput = $("botSearchInput");
 const navAdmire = $("navAdmire");
-let logoClickCount = 0;
-let logoClickTimer = null;
 
 /* ---------- i18n ---------- */
 
@@ -200,23 +199,13 @@ function applyStaticI18n() {
   }
 }
 
-function unlockAdmireTab() {
-  if (!navAdmire || !sectionNav) return;
-  navAdmire.classList.remove("hidden");
-  sectionNav.classList.add("has-secret");
-  setStatus(t("admireUnlocked"), "ok");
-}
-
 function switchSection(name) {
   if (!SECTIONS.includes(name)) name = "relationships";
-  // Guard secret tab if still locked
-  if (name === "admire" && navAdmire?.classList.contains("hidden")) {
-    name = "relationships";
-  }
   state.activeSection = name;
+  // Leaving settings full-page if open
+  closeSettings();
 
   document.querySelectorAll(".section-btn").forEach((btn) => {
-    if (btn.classList.contains("hidden")) return;
     const on = btn.dataset.section === name;
     btn.classList.toggle("active", on);
   });
@@ -1387,18 +1376,22 @@ function onResult(msg, { keepTab = false } = {}) {
 /* ---------- settings ---------- */
 
 function openSettings() {
+  // Full-page settings: hide main app shell
+  if (appMain) show(appMain, false);
   show(settingsPanel, true);
   settingsBtn?.setAttribute("aria-expanded", "true");
+  settingsBtn?.classList.add("hidden");
 }
 
 function closeSettings() {
   show(settingsPanel, false);
+  if (appMain) show(appMain, true);
   settingsBtn?.setAttribute("aria-expanded", "false");
+  settingsBtn?.classList.remove("hidden");
 }
 
 settingsBtn?.addEventListener("click", () => {
-  if (settingsPanel.classList.contains("hidden")) openSettings();
-  else closeSettings();
+  openSettings();
 });
 settingsClose?.addEventListener("click", closeSettings);
 
@@ -1430,19 +1423,6 @@ async function init() {
   applyStaticI18n();
   updateImpersonatorUi();
   show(sectionNav, true);
-
-  // Secret Admire: click logo 5 times quickly
-  headerLogo?.addEventListener("click", () => {
-    logoClickCount += 1;
-    if (logoClickTimer) clearTimeout(logoClickTimer);
-    logoClickTimer = setTimeout(() => {
-      logoClickCount = 0;
-    }, 2000);
-    if (logoClickCount >= 5) {
-      logoClickCount = 0;
-      unlockAdmireTab();
-    }
-  });
 
   if (stored.lastResult?.ok) {
     // Drop cached impersonation result if mode is off
