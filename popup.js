@@ -25,14 +25,22 @@ const state = {
   notFollowingBack: [],
   notFollowedByMe: [],
   counts: null,
+  liked: [],
   activeTab: "mutual",
+  activeSection: "relationships",
   query: "",
+  botQuery: "",
   igTabId: null,
   lang: "en",
   statusIsIdle: true,
+  likedLoaded: false,
 };
 
 const ALL_TABS = ["following", "followers", "mutual", "notBack", "notMe"];
+const SECTIONS = ["relationships", "analytics", "bots", "liked"];
+const sectionNav = $("sectionNav");
+const loadLikedBtn = $("loadLikedBtn");
+const botSearchInput = $("botSearchInput");
 
 /* ---------- i18n ---------- */
 
@@ -86,6 +94,9 @@ function applyStaticI18n() {
   // Re-render dynamic lists so button labels update
   if (state.counts) {
     renderAll();
+    renderAnalytics();
+    renderBots();
+    renderLiked();
     if (state.statusIsIdle === false && state.counts) {
       setStatus(
         t("doneSummary", {
@@ -97,6 +108,277 @@ function applyStaticI18n() {
       );
       state.statusIsIdle = false;
     }
+  }
+}
+
+function switchSection(name) {
+  if (!SECTIONS.includes(name)) name = "relationships";
+  state.activeSection = name;
+
+  document.querySelectorAll(".section-btn").forEach((btn) => {
+    const on = btn.dataset.section === name;
+    btn.classList.toggle("active", on);
+  });
+
+  for (const s of SECTIONS) {
+    const el = $(`section-${s}`);
+    if (!el) continue;
+    el.classList.toggle("hidden", s !== name);
+  }
+
+  if (name === "analytics") renderAnalytics();
+  if (name === "bots") renderBots();
+  if (name === "liked") renderLiked();
+}
+
+function miniAvatar(u) {
+  if (u.profilePic) {
+    const img = document.createElement("img");
+    img.className = "avatar";
+    img.style.width = "28px";
+    img.style.height = "28px";
+    img.src = u.profilePic;
+    img.alt = "";
+    img.referrerPolicy = "no-referrer";
+    img.loading = "lazy";
+    return img;
+  }
+  const d = placeholderAvatar(u.username);
+  d.style.width = "28px";
+  d.style.height = "28px";
+  d.style.fontSize = "11px";
+  return d;
+}
+
+function renderAnalytics() {
+  const summaryEl = $("analyticsSummary");
+  const ranksEl = $("analyticsRankings");
+  if (!summaryEl || !ranksEl || !window.IGAnalytics) return;
+
+  if (!state.counts) {
+    summaryEl.innerHTML = `<div class="empty">${escapeHtml(t("needAnalysisFirst"))}</div>`;
+    ranksEl.replaceChildren();
+    return;
+  }
+
+  const A = window.IGAnalytics;
+  const s = A.buildAnalyticsSummary(state);
+
+  summaryEl.innerHTML = `
+    <div class="metric"><strong>${A.formatPct(s.mutualRate)}</strong><span data-i18n-skip>${escapeHtml(t("metricMutualRate"))}</span></div>
+    <div class="metric"><strong>${A.formatPct(s.notBackRate)}</strong><span>${escapeHtml(t("metricNotBackRate"))}</span></div>
+    <div class="metric"><strong>${A.formatPct(s.oneWayFollowerRate)}</strong><span>${escapeHtml(t("metricOneWayFollowers"))}</span></div>
+    <div class="metric"><strong>${s.coverage.followingWithFollowerCount}/${s.coverage.followingTotal}</strong><span>${escapeHtml(t("metricCoverage"))}</span></div>
+  `;
+
+  ranksEl.replaceChildren();
+
+  const blocks = [
+    {
+      title: t("rankTopFollowers"),
+      rows: s.topByFollowers,
+      value: (u) => t("rankFollowers", { n: A.formatCount(u.followerCount) }),
+    },
+    {
+      title: t("rankTopFollowing"),
+      rows: s.topByFollowing,
+      value: (u) => t("rankFollowing", { n: A.formatCount(u.followingCount) }),
+    },
+    {
+      title: t("rankWorstRatio"),
+      rows: s.worstRatio,
+      value: (u) => {
+        const r = A.ratioFollowingToFollowers(u);
+        return t("rankRatio", { n: r != null ? r.toFixed(1) : "—" });
+      },
+    },
+  ];
+
+  for (const block of blocks) {
+    const wrap = document.createElement("div");
+    wrap.className = "rank-block";
+    const h = document.createElement("h3");
+    h.textContent = block.title;
+    wrap.appendChild(h);
+
+    if (!block.rows.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.style.padding = "12px";
+      empty.textContent = t("emptyList");
+      wrap.appendChild(empty);
+    } else {
+      block.rows.forEach((u, i) => {
+        const a = document.createElement("a");
+        a.className = "rank-row";
+        a.href = `https://www.instagram.com/${encodeURIComponent(u.username)}/`;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        const idx = document.createElement("span");
+        idx.className = "rank-idx";
+        idx.textContent = String(i + 1);
+        a.appendChild(idx);
+        a.appendChild(miniAvatar(u));
+        const meta = document.createElement("div");
+        meta.className = "rank-meta";
+        meta.innerHTML = `<div class="name">@${escapeHtml(u.username)}</div><div class="sub">${escapeHtml(u.fullName || "")}</div>`;
+        a.appendChild(meta);
+        const val = document.createElement("span");
+        val.className = "rank-val";
+        val.textContent = block.value(u);
+        a.appendChild(val);
+        wrap.appendChild(a);
+      });
+    }
+    ranksEl.appendChild(wrap);
+  }
+}
+
+function renderBots() {
+  const panel = $("panel-bots");
+  if (!panel || !window.IGAnalytics) return;
+  panel.replaceChildren();
+
+  if (!state.followers.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = state.counts ? t("botNeedFollowers") : t("needAnalysisFirst");
+    panel.appendChild(empty);
+    return;
+  }
+
+  let list = window.IGAnalytics.sortByBotScoreDesc(state.followers);
+  const q = state.botQuery.trim().toLowerCase();
+  if (q) {
+    list = list.filter(
+      (u) =>
+        u.username.toLowerCase().includes(q) ||
+        (u.fullName || "").toLowerCase().includes(q)
+    );
+  }
+
+  if (!list.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = t("noSearchResults");
+    panel.appendChild(empty);
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const u of list.slice(0, 200)) {
+    const row = document.createElement("div");
+    row.className = "user-card";
+
+    const link = document.createElement("a");
+    link.className = "user-link";
+    link.href = `https://www.instagram.com/${encodeURIComponent(u.username)}/`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.appendChild(buildAvatar(u));
+    const meta = document.createElement("div");
+    meta.className = "user-meta";
+    const sub = [
+      u.followerCount != null ? `${window.IGAnalytics.formatCount(u.followerCount)} fl.` : null,
+      u.followingCount != null ? `${window.IGAnalytics.formatCount(u.followingCount)} fg.` : null,
+      (u.botReasons || []).slice(0, 2).join(", "),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    meta.innerHTML = `<div class="name">@${escapeHtml(u.username)}</div><div class="full">${escapeHtml(sub)}</div>`;
+    link.appendChild(meta);
+    row.appendChild(link);
+
+    const pill = document.createElement("span");
+    pill.className =
+      "score-pill " + (u.botScore >= 55 ? "high" : u.botScore >= 30 ? "mid" : "low");
+    pill.textContent = t("botScore", { n: u.botScore });
+    row.appendChild(pill);
+    frag.appendChild(row);
+  }
+  panel.appendChild(frag);
+}
+
+function renderLiked() {
+  const panel = $("panel-liked");
+  if (!panel) return;
+  panel.replaceChildren();
+
+  if (!state.likedLoaded && !state.liked.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = t("likedHint");
+    panel.appendChild(empty);
+    return;
+  }
+
+  if (!state.liked.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = t("likedEmpty");
+    panel.appendChild(empty);
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const post of state.liked) {
+    const a = document.createElement("a");
+    a.className = "liked-card";
+    a.href = post.permalink || "#";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+
+    if (post.thumb) {
+      const img = document.createElement("img");
+      img.className = "liked-thumb";
+      img.src = post.thumb;
+      img.alt = "";
+      img.referrerPolicy = "no-referrer";
+      img.loading = "lazy";
+      a.appendChild(img);
+    } else {
+      const ph = document.createElement("div");
+      ph.className = "liked-thumb";
+      a.appendChild(ph);
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "liked-meta";
+    const author = post.author?.username ? `@${post.author.username}` : "—";
+    const cap = (post.caption || "").slice(0, 120);
+    meta.innerHTML = `<div class="author">${escapeHtml(author)}</div><div class="caption">${escapeHtml(cap)}</div>`;
+    a.appendChild(meta);
+    frag.appendChild(a);
+  }
+  panel.appendChild(frag);
+}
+
+async function loadLikedPosts() {
+  if (!loadLikedBtn) return;
+  loadLikedBtn.disabled = true;
+  setStatus(t("loadingLiked"));
+  try {
+    const tabId = await resolveIgTabId();
+    if (!tabId) throw new Error(t("noIgTab"));
+    await ensureContentScript(tabId);
+    const res = await chrome.tabs.sendMessage(tabId, {
+      type: "FETCH_LIKED",
+      maxPages: 8,
+    });
+    if (!res?.ok) throw new Error(res?.error || t("actionFailed"));
+    state.liked = res.liked || [];
+    state.likedLoaded = true;
+    try {
+      await chrome.storage.local.set({ lastLiked: { liked: state.liked, finishedAt: Date.now() } });
+    } catch {
+      /* ignore */
+    }
+    renderLiked();
+    setStatus(t("likedLoaded", { n: state.liked.length }), "ok");
+  } catch (err) {
+    setStatus(escapeHtml(err?.message || String(err)), "error");
+  } finally {
+    loadLikedBtn.disabled = false;
   }
 }
 
@@ -656,6 +938,13 @@ function onProgress(msg) {
   if (msg.stage === "followers") {
     progressFill.style.width = "75%";
   }
+  if (msg.stage === "liked") {
+    progressFill.style.width = "50%";
+    const text = t("progressLiked", { loaded: msg.loaded ?? 0 });
+    progressText.textContent = text;
+    setStatus(text);
+    return;
+  }
   const text = formatProgress(msg);
   progressText.textContent = text.replace(/<[^>]+>/g, "");
   setStatus(text);
@@ -705,9 +994,13 @@ function onResult(msg, { keepTab = false } = {}) {
   show(tabs, true);
   show(searchRow, true);
   show(panels, true);
+  show(sectionNav, true);
   renderAll();
+  renderAnalytics();
+  renderBots();
   if (!keepTab) switchTab("mutual");
   else switchTab(state.activeTab || "mutual", { force: true });
+  switchSection(state.activeSection || "relationships");
 
   setStatus(
     t("doneSummary", {
@@ -749,11 +1042,18 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 async function init() {
-  const stored = await chrome.storage.local.get(["lang", "lastResult"]);
+  const stored = await chrome.storage.local.get(["lang", "lastResult", "lastLiked"]);
   if (stored.lang && I18N[stored.lang]) {
     state.lang = stored.lang;
   }
   applyStaticI18n();
+  show(sectionNav, true);
+
+  if (stored.lastLiked?.liked?.length) {
+    state.liked = stored.lastLiked.liked;
+    state.likedLoaded = true;
+    renderLiked();
+  }
 
   if (stored.lastResult?.ok) {
     onResult(stored.lastResult, { keepTab: true });
@@ -813,7 +1113,21 @@ document.querySelectorAll("#tabs .tab").forEach((btn) => {
 });
 
 document.querySelectorAll(".stat-btn").forEach((btn) => {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  btn.addEventListener("click", () => {
+    switchSection("relationships");
+    switchTab(btn.dataset.tab);
+  });
+});
+
+document.querySelectorAll(".section-btn").forEach((btn) => {
+  btn.addEventListener("click", () => switchSection(btn.dataset.section));
+});
+
+loadLikedBtn?.addEventListener("click", () => loadLikedPosts());
+
+botSearchInput?.addEventListener("input", () => {
+  state.botQuery = botSearchInput.value;
+  renderBots();
 });
 
 searchInput.addEventListener("input", () => {

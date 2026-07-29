@@ -21,6 +21,7 @@ const files = [
   "popup.js",
   "popup.css",
   "i18n.js",
+  "analytics.js",
   "LICENSE",
   "README.md",
   "PRIVACY.md",

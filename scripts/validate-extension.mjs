@@ -39,6 +39,7 @@ const required = [
   "popup.js",
   "popup.css",
   "i18n.js",
+  "analytics.js",
   "icons/icon16.png",
   "icons/icon48.png",
   "icons/icon128.png",

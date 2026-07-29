@@ -127,62 +127,121 @@
       </div>
     </section>
 
-    <!-- Top: full lists (clickable) -->
-    <section id="stats" class="stats stats-two hidden" role="tablist" aria-label="Lists">
-      <button type="button" class="stat stat-btn" data-tab="following" id="tileFollowing" role="tab" aria-selected="false" data-i18n-title="viewFollowing" title="Show full following list">
-        <span id="statFollowing">0</span>
-        <label data-i18n="following">Following</label>
+    <!-- Primary sections (v2) -->
+    <nav id="sectionNav" class="section-nav hidden" role="tablist" aria-label="Sections">
+      <button type="button" class="section-btn active" data-section="relationships" data-i18n="navRelationships">
+        Relationships
       </button>
-      <button type="button" class="stat stat-btn" data-tab="followers" id="tileFollowers" role="tab" aria-selected="false" data-i18n-title="viewFollowers" title="Show full followers list">
-        <span id="statFollowers">0</span>
-        <label data-i18n="followers">Followers</label>
+      <button type="button" class="section-btn" data-section="analytics" data-i18n="navAnalytics">
+        Analytics
       </button>
-    </section>
-
-    <!-- Bottom: relationship breakdown -->
-    <nav class="tabs hidden" id="tabs" role="tablist">
-      <button class="tab active" data-tab="mutual" role="tab" aria-selected="true">
-        <span data-i18n="tabMutual">Mutual</span>
-        <span class="badge" id="badgeMutual">0</span>
+      <button type="button" class="section-btn" data-section="bots" data-i18n="navBots">
+        Bots
       </button>
-      <button class="tab" data-tab="notBack" role="tab" aria-selected="false">
-        <span data-i18n="tabNotBack">Not following back</span>
-        <span class="badge warn" id="badgeNotBack">0</span>
-      </button>
-      <button class="tab" data-tab="notMe" role="tab" aria-selected="false">
-        <span data-i18n="tabNotMe">You don’t follow</span>
-        <span class="badge info" id="badgeNotMe">0</span>
+      <button type="button" class="section-btn" data-section="liked" data-i18n="navLiked">
+        Liked
       </button>
     </nav>
 
-    <div class="search-row hidden" id="searchRow">
-      <input
-        id="searchInput"
-        type="search"
-        data-i18n-placeholder="searchPlaceholder"
-        placeholder="Search username…"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <button
-        id="exportBtn"
-        class="btn ghost"
-        type="button"
-        data-i18n="export"
-        data-i18n-title="exportTitle"
-        title="Export as JSON"
-      >
-        Export
-      </button>
+    <!-- Relationships section -->
+    <div id="section-relationships" class="section-body">
+      <section id="stats" class="stats stats-two hidden" role="tablist" aria-label="Lists">
+        <button type="button" class="stat stat-btn" data-tab="following" id="tileFollowing" role="tab" aria-selected="false" data-i18n-title="viewFollowing" title="Show full following list">
+          <span id="statFollowing">0</span>
+          <label data-i18n="following">Following</label>
+        </button>
+        <button type="button" class="stat stat-btn" data-tab="followers" id="tileFollowers" role="tab" aria-selected="false" data-i18n-title="viewFollowers" title="Show full followers list">
+          <span id="statFollowers">0</span>
+          <label data-i18n="followers">Followers</label>
+        </button>
+      </section>
+
+      <nav class="tabs hidden" id="tabs" role="tablist">
+        <button class="tab active" data-tab="mutual" role="tab" aria-selected="true">
+          <span data-i18n="tabMutual">Mutual</span>
+          <span class="badge" id="badgeMutual">0</span>
+        </button>
+        <button class="tab" data-tab="notBack" role="tab" aria-selected="false">
+          <span data-i18n="tabNotBack">Not following back</span>
+          <span class="badge warn" id="badgeNotBack">0</span>
+        </button>
+        <button class="tab" data-tab="notMe" role="tab" aria-selected="false">
+          <span data-i18n="tabNotMe">You don’t follow</span>
+          <span class="badge info" id="badgeNotMe">0</span>
+        </button>
+      </nav>
+
+      <div class="search-row hidden" id="searchRow">
+        <input
+          id="searchInput"
+          type="search"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Search username…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button
+          id="exportBtn"
+          class="btn ghost"
+          type="button"
+          data-i18n="export"
+          data-i18n-title="exportTitle"
+          title="Export as JSON"
+        >
+          Export
+        </button>
+      </div>
+
+      <main id="panels" class="panels hidden">
+        <section id="panel-following" class="panel" role="tabpanel" hidden></section>
+        <section id="panel-followers" class="panel" role="tabpanel" hidden></section>
+        <section id="panel-mutual" class="panel active" role="tabpanel"></section>
+        <section id="panel-notBack" class="panel" role="tabpanel" hidden></section>
+        <section id="panel-notMe" class="panel" role="tabpanel" hidden></section>
+      </main>
     </div>
 
-    <main id="panels" class="panels hidden">
-      <section id="panel-following" class="panel" role="tabpanel" hidden></section>
-      <section id="panel-followers" class="panel" role="tabpanel" hidden></section>
-      <section id="panel-mutual" class="panel active" role="tabpanel"></section>
-      <section id="panel-notBack" class="panel" role="tabpanel" hidden></section>
-      <section id="panel-notMe" class="panel" role="tabpanel" hidden></section>
-    </main>
+    <!-- Analytics section -->
+    <div id="section-analytics" class="section-body hidden">
+      <p class="section-hint" data-i18n="analyticsHint">
+        Rankings use data from your last analysis. Some accounts lack count fields from Instagram.
+      </p>
+      <div id="analyticsSummary" class="metric-grid"></div>
+      <div id="analyticsRankings" class="rank-wrap"></div>
+    </div>
+
+    <!-- Bots section -->
+    <div id="section-bots" class="section-body hidden">
+      <p class="section-hint" data-i18n-html="botsHint">
+        <strong>Heuristic only</strong> — not proof of bots. Sorted by risk score among your followers.
+      </p>
+      <div class="search-row" id="botSearchRow">
+        <input
+          id="botSearchInput"
+          type="search"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Search username…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <main class="panels panels-always">
+        <section id="panel-bots" class="panel"></section>
+      </main>
+    </div>
+
+    <!-- Liked posts section -->
+    <div id="section-liked" class="section-body hidden">
+      <p class="section-hint" data-i18n="likedHint">
+        Posts you liked recently (from your Instagram session). Load may be rate-limited.
+      </p>
+      <button id="loadLikedBtn" class="btn primary" type="button" data-i18n="loadLiked">
+        Load liked posts
+      </button>
+      <main class="panels panels-always">
+        <section id="panel-liked" class="panel"></section>
+      </main>
+    </div>
 
     <footer class="footer">
       <p id="footerText" data-i18n="footer">
@@ -192,6 +251,7 @@
     </footer>
 
     <script src="i18n.js"></script>
+    <script src="analytics.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

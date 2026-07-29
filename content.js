@@ -197,6 +197,13 @@ function pickProfilePic(u) {
 }
 
 function mapUser(u) {
+  const followerCount =
+    u.follower_count ?? u.followers_count ?? u.edge_followed_by?.count ?? null;
+  const followingCount =
+    u.following_count ?? u.follow_count ?? u.edge_follow?.count ?? null;
+  const mediaCount =
+    u.media_count ?? u.total_igtv_videos ?? u.edge_owner_to_timeline_media?.count ?? null;
+
   return {
     id: String(u.pk ?? u.id ?? u.pk_id ?? ""),
     username: u.username || "",
@@ -204,7 +211,76 @@ function mapUser(u) {
     profilePic: pickProfilePic(u),
     isPrivate: Boolean(u.is_private),
     isVerified: Boolean(u.is_verified),
+    hasAnonymousProfilePic: Boolean(
+      u.has_anonymous_profile_picture || u.is_anonymous_profile_picture
+    ),
+    followerCount: followerCount != null ? Number(followerCount) : null,
+    followingCount: followingCount != null ? Number(followingCount) : null,
+    mediaCount: mediaCount != null ? Number(mediaCount) : null,
   };
+}
+
+function mapLikedItem(item) {
+  const user = item.user || item.owner || {};
+  const caption =
+    item.caption?.text ||
+    item.caption ||
+    item.accessibility_caption ||
+    "";
+  const thumb =
+    item.image_versions2?.candidates?.[0]?.url ||
+    item.carousel_media?.[0]?.image_versions2?.candidates?.[0]?.url ||
+    item.thumbnail_url ||
+    "";
+  const code = item.code || item.pk || item.id || "";
+  const id = String(item.pk ?? item.id ?? code);
+  return {
+    id,
+    code: String(code),
+    caption: typeof caption === "string" ? caption : "",
+    thumb: thumb.startsWith("//") ? `https:${thumb}` : thumb,
+    takenAt: item.taken_at || item.device_timestamp || null,
+    likeCount: item.like_count ?? null,
+    author: {
+      id: String(user.pk ?? user.id ?? ""),
+      username: user.username || "",
+      fullName: user.full_name || "",
+      profilePic: pickProfilePic(user),
+    },
+    permalink: user.username
+      ? `https://www.instagram.com/p/${encodeURIComponent(String(code).split("_")[0] || code)}/`
+      : `https://www.instagram.com/p/${encodeURIComponent(String(code))}/`,
+  };
+}
+
+/** Paginated liked posts for the logged-in user */
+async function fetchLikedPosts(onProgress, { maxPages = 8 } = {}) {
+  const results = [];
+  let maxId = null;
+  let page = 0;
+
+  do {
+    page += 1;
+    let url = "https://www.instagram.com/api/v1/feed/liked/?";
+    if (maxId) url += `max_id=${encodeURIComponent(maxId)}`;
+
+    const data = await igFetch(url);
+    const items = data.items || data.media_items || [];
+    for (const raw of items) {
+      const media = raw.media || raw;
+      results.push(mapLikedItem(media));
+    }
+
+    if (onProgress) {
+      onProgress({ loaded: results.length, page, hasMore: Boolean(data.next_max_id) });
+    }
+
+    maxId = data.next_max_id || null;
+    if (!maxId || page >= maxPages) break;
+    await sleep(DELAY_MS);
+  } while (maxId);
+
+  return results;
 }
 
 async function fetchList(userId, type, onProgress) {
@@ -296,7 +372,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     (async () => {
       try {
         const userId = String(msg.userId || "");
-        if (!userId) throw new Error("Keine User-ID.");
+        if (!userId) throw new Error("No user id.");
         const action = msg.action === "follow" ? "create" : "destroy";
         const result = await friendshipAction(userId, action);
         sendResponse({ ok: true, ...result });
@@ -305,6 +381,30 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
     })();
     return true; // async sendResponse
+  }
+
+  if (msg?.type === "FETCH_LIKED") {
+    (async () => {
+      try {
+        const liked = await fetchLikedPosts(
+          (p) => {
+            chrome.runtime
+              .sendMessage({
+                type: "PROGRESS",
+                stage: "liked",
+                loaded: p.loaded,
+                page: p.page,
+              })
+              .catch(() => {});
+          },
+          { maxPages: msg.maxPages ?? 8 }
+        );
+        sendResponse({ ok: true, liked, finishedAt: Date.now() });
+      } catch (err) {
+        sendResponse({ ok: false, error: err?.message || String(err) });
+      }
+    })();
+    return true;
   }
 
   if (msg?.type === "FETCH_AVATAR") {
