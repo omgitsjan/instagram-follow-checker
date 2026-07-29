@@ -1039,24 +1039,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             .catch(() => {});
         });
 
-        // List payloads omit public counts on web → enrich following (Analytics)
-        // and a sample of followers (Bots heuristics)
-        await enrichUsersWithCounts(
-          following,
-          (p) => {
-            chrome.runtime
-              .sendMessage({
-                type: "PROGRESS",
-                stage: "enrich",
-                target: "following",
-                enriched: p.enriched,
-                total: p.total,
-                ok: p.ok,
-              })
-              .catch(() => {});
-          },
-          { max: 150, delayMs: 500 }
-        );
+        // Light enrich for bots heuristics only (charts use list buckets, no counts needed)
         await enrichUsersWithCounts(
           followers,
           (p) => {
@@ -1071,7 +1054,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
               })
               .catch(() => {});
           },
-          { max: 100, delayMs: 500 }
+          { max: 40, delayMs: 450 }
         );
 
         const lists = compareLists(following, followers);
