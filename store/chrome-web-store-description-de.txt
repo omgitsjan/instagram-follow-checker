@@ -1,13 +1,13 @@
-Instagram Follow Checker – wer folgt dir zurück?
+Instagram Follow Checker – Beziehungen, Charts, Bots & Impersonator
 
-Finde gegenseitige Follower, Accounts die dir nicht zurückfolgen und Follower, denen du noch nicht folgst. Kostenlos, Open Source, mit deiner normalen Instagram-Anmeldung in Chrome. Keine offizielle Instagram-API. Keine Paywall. Keine Analyse-Daten auf unseren Servern.
+Finde gegenseitige Follower, Accounts die dir nicht zurückfolgen und Follower, denen du noch nicht folgst — plus lokale Analytics-Charts, Bot-Heuristiken und optional Impersonator (nur-Lesen-Analyse eines anderen öffentlichen Accounts). Kostenlos, Open Source, mit deiner normalen Instagram-Anmeldung in Chrome. Keine offizielle Instagram-API. Keine Paywall. Keine Analyse-Daten auf unseren Servern.
 
 
 ═══════════════════════════════════════
 WAS MACHT DIE EXTENSION?
 ═══════════════════════════════════════
 
-Instagram Follow Checker vergleicht deine Following-Liste mit deinen Followern und sortiert sie in drei Tabs:
+Instagram Follow Checker vergleicht deine Following-Liste mit deinen Followern und sortiert sie in klare Beziehungs-Ansichten:
 
 • Gegenseitig – du folgst ihnen und sie folgen dir
 • Folgt nicht zurück – du folgst ihnen, sie dir nicht
@@ -19,6 +19,12 @@ In den Listen kannst du:
 • Accounts folgen, die dir folgen (private Profile: oft „Angefragt“)
 • nach Username suchen
 • Ergebnisse als JSON exportieren
+
+v2 zusätzlich:
+• Analytics – Donut-/Pie-Charts aus deinen Listen-Buckets
+• Bots – lokale Heuristiken mit optionalen Aktionen
+• Impersonator (Einstellungen) – öffentlichen Username laden für eine Read-only-Analyse; Disable setzt dich zurück
+• Posts / Admire – als coming soon markiert
 
 Profilbilder werden angezeigt, sofern verfügbar. Die letzte Analyse kann beim erneuten Öffnen wiederhergestellt werden.
 
@@ -58,6 +64,9 @@ FEATURES
 ═══════════════════════════════════════
 
 ✓ Drei Listen: gegenseitig / folgt nicht zurück / ich folge nicht
+✓ Analytics-Charts aus Listendaten
+✓ Bot-Heuristiken mit optionalen Entfolgen-/Remove-Aktionen
+✓ Impersonator: Read-only-Analyse eines anderen öffentlichen Accounts
 ✓ Folgen und Entfolgen direkt im Popup
 ✓ Profilbilder mit Fallback
 ✓ Suche in jeder Liste
@@ -125,4 +134,4 @@ SPRACHEN
 KURZ
 ═══════════════════════════════════════
 
-Instagram Follow Checker zeigt dir in Chrome deine Follow-Beziehungen: gegenseitig, nicht zurück und wen du noch nicht folgst – inkl. optional Folgen/Entfolgen, Suche und Export. Lokal, Open Source, kostenlos. Verantwortlich und auf eigenes Risiko nutzen.
+Instagram Follow Checker zeigt dir in Chrome deine Follow-Beziehungen: gegenseitig, nicht zurück und wen du noch nicht folgst – plus Charts, Bot-Heuristiken und optional Impersonator. Lokal, Open Source, kostenlos. Verantwortlich und auf eigenes Risiko nutzen.
