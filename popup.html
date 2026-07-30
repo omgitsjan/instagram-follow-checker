@@ -21,13 +21,22 @@
       </div>
       <button
         id="settingsBtn"
-        class="btn icon-btn"
+        class="btn icon-btn settings-toggle"
         type="button"
         data-i18n-title="settings"
         title="Settings"
         aria-label="Settings"
+        aria-expanded="false"
+        aria-controls="settingsPanel"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg
+          class="icon-gear"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
           <path
             d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
             stroke="currentColor"
@@ -40,16 +49,28 @@
             stroke-linejoin="round"
           />
         </svg>
+        <svg
+          class="icon-close"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M6 6l12 12M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
       </button>
     </header>
 
-    <!-- Settings full page -->
+    <!-- Settings full page (header gear becomes × to close) -->
     <div id="settingsPanel" class="settings-page hidden" role="dialog" aria-labelledby="settingsTitle">
       <div class="settings-page-inner">
         <div class="settings-head">
-          <button id="settingsClose" class="btn ghost settings-back" type="button" data-i18n="settingsBack">
-            ← Back
-          </button>
           <h2 id="settingsTitle" data-i18n="settingsTitle">Settings</h2>
         </div>
 

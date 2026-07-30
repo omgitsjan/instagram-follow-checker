@@ -15,7 +15,6 @@ const accountLine = $("accountLine");
 const headerLogo = $("headerLogo");
 const settingsBtn = $("settingsBtn");
 const settingsPanel = $("settingsPanel");
-const settingsClose = $("settingsClose");
 const appMain = $("appMain");
 
 const state = {
@@ -1177,25 +1176,41 @@ function onResult(msg, { keepTab = false } = {}) {
 
 /* ---------- settings ---------- */
 
+function isSettingsOpen() {
+  return settingsPanel && !settingsPanel.classList.contains("hidden");
+}
+
+function syncSettingsToggleUi(open) {
+  if (!settingsBtn) return;
+  settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  const label = open ? t("close") : t("settings");
+  settingsBtn.title = label;
+  settingsBtn.setAttribute("aria-label", label);
+  // Prefer live title over static data-i18n-title while open
+  if (open) {
+    settingsBtn.removeAttribute("data-i18n-title");
+  } else {
+    settingsBtn.setAttribute("data-i18n-title", "settings");
+  }
+}
+
 function openSettings() {
-  // Full-page settings: hide main app shell
+  // Full-page settings under fixed header; gear becomes ×
   if (appMain) show(appMain, false);
   show(settingsPanel, true);
-  settingsBtn?.setAttribute("aria-expanded", "true");
-  settingsBtn?.classList.add("hidden");
+  syncSettingsToggleUi(true);
 }
 
 function closeSettings() {
   show(settingsPanel, false);
   if (appMain) show(appMain, true);
-  settingsBtn?.setAttribute("aria-expanded", "false");
-  settingsBtn?.classList.remove("hidden");
+  syncSettingsToggleUi(false);
 }
 
 settingsBtn?.addEventListener("click", () => {
-  openSettings();
+  if (isSettingsOpen()) closeSettings();
+  else openSettings();
 });
-settingsClose?.addEventListener("click", closeSettings);
 
 document.querySelectorAll(".lang-btn").forEach((btn) => {
   btn.addEventListener("click", () => setLanguage(btn.dataset.lang));
