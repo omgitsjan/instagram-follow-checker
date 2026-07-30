@@ -3,15 +3,15 @@
 [![CI](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-Chrome extension (**Manifest V3**, **v2**) for Instagram follow relationships, local analytics, bot heuristics, and optional **Impersonator** (read-only view of another public account) — all via **your existing browser session**. No official API, no paywall, no backend.
+Chrome extension (**Manifest V3**, **v2**) for Instagram follow relationships, local analytics, and bot heuristics — all via **your existing browser session**. No official API, no paywall, no backend.
 
 | Section | What you get |
 |---------|----------------|
 | **Relationships** | Following / Followers tiles; Mutual / Not back / You don’t follow |
 | **Analytics** | Doughnut charts from your list buckets (mutual / not back / not you) |
 | **Bots** | Heuristic “maybe bot” list (≥25 signals) with unfollow/remove actions |
-| **Posts** | Roadmap / coming soon (Admire & own-posts fans) |
-| **Settings** | Language EN/DE, Impersonator load/disable, open source, tip |
+| **Posts** / **Admire** | Roadmap / coming soon |
+| **Settings** | Language EN/DE, open source, tip |
 
 > **Vibe-coded.** Built exploratively with AI — not production/enterprise software. Expect rough edges, Instagram breaking changes, and no support guarantee.
 
@@ -65,9 +65,8 @@ This repo is **not** advice to circumvent ToS. You are responsible for complying
 ## Features
 
 - **Relationships:** full Following / Followers lists; mutual / not back / you don’t follow  
-- **Analytics:** pie/doughnut charts from list buckets (no broken “most followers” rankings)  
+- **Analytics:** pie/doughnut charts from list buckets  
 - **Bots:** local heuristics with unfollow / remove-follower style actions where available  
-- **Impersonator (Settings):** load a public username → analysis runs for that account (read-only); **Disable** resets to you  
 - Profile pictures (with fallback via the Instagram tab)  
 - **Unfollow** / **Follow** from relationship lists  
 - Search and JSON export  
@@ -120,7 +119,7 @@ node scripts/package-zip.mjs
 2. Start analysis and wait (large accounts take longer; requests are paced).  
 3. Use **Relationships** for tiles/tabs; **Analytics** for charts; **Bots** for heuristic flags.  
 4. Optionally follow/unfollow; use search or export.  
-5. **Settings** → language EN/DE, **Impersonator** (load public username / disable), GitHub, tip.  
+5. **Settings** → language EN/DE, GitHub, tip.  
 6. On errors (429, login): wait, reload, try again.  
 
 ---
@@ -130,15 +129,15 @@ node scripts/package-zip.mjs
 | File | Role |
 |------|------|
 | `manifest.json` | MV3, Instagram + CDN host permissions |
-| `content.js` | Runs on `instagram.com`, lists, resolve user, follow/unfollow |
-| `popup.*` | UI: sections, tiles, charts, bots, settings, Impersonator |
+| `content.js` | Runs on `instagram.com`, lists, follow/unfollow |
+| `popup.*` | UI: sections, tiles, charts, bots, settings |
 | `analytics.js` | Doughnut/pie charts from list buckets |
 | `i18n.js` | English + German strings |
 | `PRIVACY.md` | Privacy policy |
 | `docs/V2-CONCEPT.md` | v2 product concept notes |
 | `store/` | Chrome Web Store assets & form answers |
 
-Data stays in the browser (`chrome.storage.local` for language + last result + Impersonator target).
+Data stays in the browser (`chrome.storage.local` for language + last result).
 
 ---
 

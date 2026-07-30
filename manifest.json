@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Instagram Follow Checker",
   "version": "2.0.0",
-  "description": "Relationships, charts, bot signals & Impersonator mode – IG session only, no API.",
+  "description": "Relationships, charts & bot signals – IG session only, no official API.",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
     "https://www.instagram.com/*",

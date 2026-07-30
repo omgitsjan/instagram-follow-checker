@@ -152,114 +152,6 @@ async function fetchImageAsDataUrl(imageUrl) {
   }
 }
 
-function mapWebUser(u) {
-  if (!u) return null;
-  const id = u.id ?? u.pk ?? u.pk_id;
-  if (id == null && !u.username) return null;
-  return {
-    id: String(id ?? ""),
-    username: u.username || "",
-    fullName: u.full_name || "",
-    profilePic: u.profile_pic_url || u.profile_pic_url_hd || pickProfilePic(u) || "",
-    followersCount:
-      u.edge_followed_by?.count ?? u.follower_count ?? u.followers_count ?? null,
-    followingCount: u.edge_follow?.count ?? u.following_count ?? null,
-    isPrivate: Boolean(u.is_private),
-    isVerified: Boolean(u.is_verified),
-  };
-}
-
-/**
- * Resolve public (or visible) username → user object.
- * web_profile_info often 400s; topsearch is more reliable on web.
- */
-async function getUserByUsername(username) {
-  const clean = String(username || "")
-    .trim()
-    .replace(/^@+/, "")
-    .replace(/\/+$/, "")
-    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
-    .split(/[/?#]/)[0];
-  if (!clean) throw new Error("Enter a username.");
-  if (!/^[A-Za-z0-9._]+$/.test(clean)) {
-    throw new Error("Invalid username.");
-  }
-
-  const errors = [];
-
-  // 1) Top search (usually works while logged in)
-  try {
-    const data = await igFetch(
-      `https://www.instagram.com/web/search/topsearch/?context=blended&query=${encodeURIComponent(clean)}&include_reel=false`
-    );
-    const users = data?.users || [];
-    const exact =
-      users.find(
-        (x) =>
-          String(x.user?.username || x.username || "").toLowerCase() ===
-          clean.toLowerCase()
-      ) || users[0];
-    const raw = exact?.user || exact;
-    const mapped = mapWebUser(raw);
-    if (mapped?.id && mapped.username) {
-      // Prefer exact username match only
-      if (mapped.username.toLowerCase() === clean.toLowerCase()) {
-        return mapped;
-      }
-      // If first result isn't exact, still accept exact from list
-      for (const row of users) {
-        const m = mapWebUser(row.user || row);
-        if (m?.username?.toLowerCase() === clean.toLowerCase() && m.id) {
-          return m;
-        }
-      }
-      errors.push("topsearch: no exact username match");
-    } else {
-      errors.push("topsearch: empty");
-    }
-  } catch (err) {
-    errors.push(`topsearch: ${err?.message || err}`);
-  }
-
-  // 2) web_profile_info
-  try {
-    const data = await igFetch(
-      `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(clean)}`,
-      {
-        headers: {
-          Referer: `https://www.instagram.com/${encodeURIComponent(clean)}/`,
-        },
-      }
-    );
-    const mapped = mapWebUser(data?.data?.user);
-    if (mapped?.id) return mapped;
-    errors.push("web_profile_info: no user");
-  } catch (err) {
-    errors.push(`web_profile_info: ${err?.message || err}`);
-  }
-
-  // 3) Legacy search
-  try {
-    const data = await igFetch(
-      `https://www.instagram.com/api/v1/users/search/?q=${encodeURIComponent(clean)}&count=10`
-    );
-    const list = data?.users || [];
-    for (const raw of list) {
-      const mapped = mapWebUser(raw);
-      if (mapped?.username?.toLowerCase() === clean.toLowerCase() && mapped.id) {
-        return mapped;
-      }
-    }
-    errors.push("users/search: no exact match");
-  } catch (err) {
-    errors.push(`users/search: ${err?.message || err}`);
-  }
-
-  throw new Error(
-    `Could not load @${clean}. Stay logged in on instagram.com and use a public username. (${errors.slice(0, 2).join(" · ")})`
-  );
-}
-
 async function getCurrentUser() {
   // 1) Cookie ds_user_id + Profil-Info
   const userId = getCookie("ds_user_id");
@@ -806,6 +698,19 @@ async function enrichUsersWithCounts(users, onProgress, { max = 120, delayMs = 5
         u.followingCount == null ||
         u.mediaCount == null)
   );
+  // Prefer sparse / digit-heavy accounts so bot heuristics get counts where useful
+  targets.sort((a, b) => {
+    const hint = (u) => {
+      let s = 0;
+      const un = (u.username || "").toLowerCase();
+      if (u.hasAnonymousProfilePic || !u.profilePic) s += 3;
+      if (/\d{4,}$/.test(un) || (un.match(/\d/g) || []).length >= 5) s += 3;
+      if (!(u.fullName || "").trim()) s += 1;
+      if (u.isPrivate) s += 1;
+      return s;
+    };
+    return hint(b) - hint(a);
+  });
   const slice = targets.slice(0, max);
   let ok = 0;
   for (let i = 0; i < slice.length; i++) {
@@ -958,18 +863,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  if (msg?.type === "RESOLVE_USER") {
-    (async () => {
-      try {
-        const target = await getUserByUsername(msg.username || "");
-        sendResponse({ ok: true, user: target });
-      } catch (err) {
-        sendResponse({ ok: false, error: err?.message || String(err) });
-      }
-    })();
-    return true;
-  }
-
   if (msg?.type === "ANALYZE") {
     if (running) {
       sendResponse({ ok: false, error: "Analysis already running." });
@@ -979,62 +872,34 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     running = true;
     (async () => {
       try {
-        const viewer = await getCurrentUser();
-        const impersonateName = (msg.targetUsername || "").replace(/^@/, "").trim();
-        const impersonating = Boolean(msg.impersonating && impersonateName);
-
-        let subject = viewer;
-        if (impersonating) {
-          chrome.runtime
-            .sendMessage({
-              type: "PROGRESS",
-              stage: "user",
-              me: viewer,
-              message: `Resolving @${impersonateName}…`,
-            })
-            .catch(() => {});
-          subject = await getUserByUsername(impersonateName);
-          if (subject.isPrivate) {
-            // Lists may still work if you follow them; warn via progress
-            chrome.runtime
-              .sendMessage({
-                type: "PROGRESS",
-                stage: "user",
-                me: subject,
-                message: `Private account @${subject.username} — lists only if you can view them.`,
-              })
-              .catch(() => {});
-          }
-        }
+        const me = await getCurrentUser();
 
         chrome.runtime
           .sendMessage({
             type: "PROGRESS",
             stage: "user",
-            me: subject,
-            viewer,
-            impersonating,
+            me,
           })
           .catch(() => {});
 
-        const following = await fetchList(subject.id, "following", (p) => {
+        const following = await fetchList(me.id, "following", (p) => {
           chrome.runtime
             .sendMessage({
               type: "PROGRESS",
               stage: "following",
               loaded: p.loaded,
-              total: subject.followingCount,
+              total: me.followingCount,
             })
             .catch(() => {});
         });
 
-        const followers = await fetchList(subject.id, "followers", (p) => {
+        const followers = await fetchList(me.id, "followers", (p) => {
           chrome.runtime
             .sendMessage({
               type: "PROGRESS",
               stage: "followers",
               loaded: p.loaded,
-              total: subject.followersCount,
+              total: me.followersCount,
             })
             .catch(() => {});
         });
@@ -1061,10 +926,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         const result = {
           type: "RESULT",
           ok: true,
-          me: subject,
-          viewer,
-          impersonating,
-          readOnly: impersonating,
+          me,
           counts: {
             following: following.length,
             followers: followers.length,

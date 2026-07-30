@@ -14,12 +14,9 @@
         </div>
         <div class="brand-text">
           <h1 data-i18n="appTitle">Follow Checker</h1>
-          <div class="account-row">
-            <p class="subtitle account-line" id="accountLine" data-i18n="tagline">
-              No API · your session only
-            </p>
-            <span id="impersonatorChip" class="impersonator-chip hidden"></span>
-          </div>
+          <p class="subtitle account-line" id="accountLine" data-i18n="tagline">
+            No API · your session only
+          </p>
         </div>
       </div>
       <button
@@ -86,41 +83,6 @@
           </div>
 
           <div class="settings-block">
-            <label class="settings-label" data-i18n="impersonator">Impersonator</label>
-            <p class="settings-help" data-i18n="impersonatorHelp">
-              Enter a public username and load their follow stats (read-only). No toggle — load to enter, disable to reset.
-            </p>
-            <div id="impersonatorForm" class="impersonator-form">
-              <input
-                id="impersonatorUsername"
-                type="text"
-                class="settings-input"
-                data-i18n-placeholder="impersonatorPlaceholder"
-                placeholder="@username"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <button
-                type="button"
-                id="impersonatorSubmit"
-                class="btn primary"
-                data-i18n="impersonatorSubmit"
-              >
-                Load account
-              </button>
-              <button
-                type="button"
-                id="impersonatorDisable"
-                class="btn ghost hidden"
-                data-i18n="impersonatorDisable"
-              >
-                Disable Impersonator
-              </button>
-              <p id="impersonatorStatus" class="impersonator-status" role="status"></p>
-            </div>
-          </div>
-
-          <div class="settings-block">
             <a
               id="repoLink"
               class="settings-link"
@@ -156,11 +118,6 @@
     </div>
 
     <div id="appMain" class="app-main">
-    <div id="impersonatorBanner" class="impersonator-banner hidden" role="status">
-      <strong data-i18n="impersonatorBannerTitle">Impersonator · read-only</strong>
-      <span id="impersonatorBannerUser"></span>
-    </div>
-
     <section class="controls" id="mainControls">
       <button id="startBtn" class="btn primary" type="button" data-i18n="startAnalysis">
         Start analysis

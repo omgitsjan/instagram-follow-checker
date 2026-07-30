@@ -1,7 +1,8 @@
 # Instagram Follow Checker – v2 Concept
 
 **Branch:** `feature/v2-insights-analytics`  
-**Status:** MVP implemented on this branch (heuristics + shell). Full vision below.
+**Status:** MVP on this branch (relationships + charts + bots; Posts/Admire coming soon).  
+**Deferred:** Impersonator (other-account analysis) was removed — unreliable with web session limits.
 
 ---
 
@@ -12,9 +13,9 @@ Keep the **single product purpose** (understand Instagram relationships in the b
 | Section | Purpose |
 |---------|---------|
 | **Relationships** | v1: following/followers, mutual, not back, not following |
-| **Analytics** | Rankings & ratios from list data (who has huge followings, mutual rate, …) |
+| **Analytics** | Doughnut charts + rates from list buckets (mutual / not back / not you) |
 | **Bots** | Heuristic “likely low-quality / bot-like” scores on **your followers** |
-| **Liked** | Posts **you** liked recently (activity insight) |
+| **Posts / Admire** | Coming soon (post fans, story viewers — blocked or fragile on web) |
 
 English UI default; German remains in Settings.
 
@@ -56,13 +57,12 @@ Unchanged product core. Top tiles + three relationship tabs + follow/unfollow.
 
 ### 2. Analytics
 
-Derived **only** from already loaded lists:
+Derived **only** from already loaded lists (no “most followers” rankings — public counts are rarely on list payloads):
 
 - Mutual rate, not-back rate, one-way follower rate  
-- **Ranking: accounts you follow with most followers** (influence you follow)  
-- **Ranking: accounts with highest following count** (follow-many pattern)  
-- **Ranking: worst following/follower ratio** (among users with count data)  
-- Quick “coverage” note when Instagram list payload lacks count fields  
+- Doughnut: following split (mutual vs not back)  
+- Doughnut: followers split (mutual vs you don’t follow)  
+- Doughnut: network mix (three buckets)  
 
 ### 3. Bots (heuristic – not ground truth)
 
