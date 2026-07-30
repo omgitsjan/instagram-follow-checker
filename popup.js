@@ -171,6 +171,16 @@ function chartLabel(key) {
     mutual: t("chartMutual"),
     notBack: t("chartNotBack"),
     notMe: t("chartNotMe"),
+    following: t("following"),
+    followers: t("followers"),
+    public: t("chartPublic"),
+    private: t("chartPrivate"),
+    verified: t("chartVerified"),
+    notVerified: t("chartNotVerified"),
+    riskHigh: t("chartRiskHigh"),
+    riskMid: t("chartRiskMid"),
+    riskFlagged: t("chartRiskFlagged"),
+    riskClean: t("chartRiskClean"),
   };
   return map[key] || key;
 }
@@ -224,7 +234,6 @@ function buildChartCard(title, segments, centerText, centerSub) {
 function renderAnalytics() {
   const summaryEl = $("analyticsSummary");
   const panel = $("panel-analytics");
-  const searchRow = $("analyticsSearchRow");
   if (!summaryEl || !panel || !window.IGAnalytics) return;
 
   if (!state.counts) {
@@ -247,9 +256,10 @@ function renderAnalytics() {
     <div class="metric"><strong>${A.formatCount(s.followersCount)}</strong><span>${escapeHtml(t("followers"))}</span></div>
     <div class="metric"><strong>${A.formatPct(s.mutualRate)}</strong><span>${escapeHtml(t("metricMutualRate"))}</span></div>
     <div class="metric"><strong>${A.formatPct(s.notBackRate)}</strong><span>${escapeHtml(t("metricNotBackRate"))}</span></div>
+    <div class="metric"><strong>${A.formatPct(s.oneWayFollowerRate)}</strong><span>${escapeHtml(t("metricOneWayFollowers"))}</span></div>
+    <div class="metric"><strong>${A.formatCount(s.botFlaggedCount)}</strong><span>${escapeHtml(t("metricBotFlagged"))}</span></div>
   `;
 
-  if (searchRow) show(searchRow, true);
   panel.replaceChildren();
 
   const wrap = document.createElement("div");
@@ -278,42 +288,39 @@ function renderAnalytics() {
       t("metricMutualRate")
     )
   );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartAudienceTitle"),
+      s.audienceBalance,
+      A.formatCount(s.followingCount + s.followersCount),
+      t("chartAudienceCenter")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartPrivacyTitle"),
+      s.followersPrivacy,
+      A.formatCount(s.followersCount),
+      t("followers")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartVerifiedTitle"),
+      s.followingVerified,
+      A.formatCount(s.verifiedFollowing),
+      t("chartVerified")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartBotRiskTitle"),
+      s.followersBotRisk,
+      A.formatCount(s.botFlaggedCount),
+      t("metricBotFlagged")
+    )
+  );
   panel.appendChild(wrap);
-}
-
-function exportAnalyticsList() {
-  if (!state.analyticsCache || !state.counts) return;
-  const s = state.analyticsCache;
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    section: "analytics",
-    type: "relationship-charts",
-    account: state.me,
-    summary: {
-      following: s.followingCount,
-      followers: s.followersCount,
-      mutual: s.mutualCount,
-      notFollowingBack: s.notBackCount,
-      notFollowedByMe: s.notMeCount,
-      mutualRate: s.mutualRate,
-      notBackRate: s.notBackRate,
-      oneWayFollowerRate: s.oneWayFollowerRate,
-    },
-    charts: {
-      followingSplit: s.followingSplit,
-      followersSplit: s.followersSplit,
-      networkMix: s.networkMix,
-    },
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `instagram-analytics-charts-${state.me?.username || "export"}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 function renderBots() {
@@ -1325,8 +1332,6 @@ botSearchInput?.addEventListener("input", () => {
   state.botQuery = botSearchInput.value;
   renderBots();
 });
-
-$("analyticsExportBtn")?.addEventListener("click", () => exportAnalyticsList());
 
 searchInput.addEventListener("input", () => {
   state.query = searchInput.value;

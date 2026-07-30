@@ -563,14 +563,6 @@ h1 {
   letter-spacing: 0.03em;
 }
 
-.analytics-topics {
-  flex-shrink: 0;
-}
-
-.analytics-export-spacer {
-  flex: 1;
-}
-
 .charts-panel {
   padding-bottom: 12px;
 }

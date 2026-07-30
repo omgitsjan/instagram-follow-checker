@@ -105,9 +105,17 @@ function ratioFollowingToFollowers(u) {
   return g / f;
 }
 
+function countBy(users, pred) {
+  let n = 0;
+  for (const u of users || []) {
+    if (pred(u)) n += 1;
+  }
+  return n;
+}
+
 /**
  * Charts + rates only from list data we already have
- * (mutual / notBack / notMe / following / followers).
+ * (mutual / notBack / notMe / following / followers + list flags).
  */
 function buildAnalyticsSummary(state) {
   const following = state.following || [];
@@ -143,6 +151,48 @@ function buildAnalyticsSummary(state) {
     { key: "notMe", label: "notMe", value: notMeCount, color: "#6ea8fe" },
   ];
 
+  // Relative audience size (different lists — still useful as balance snapshot)
+  const audienceBalance = [
+    { key: "following", label: "following", value: fCount, color: "#c084fc" },
+    { key: "followers", label: "followers", value: frCount, color: "#38bdf8" },
+  ];
+
+  // Privacy among followers (always available on list payloads)
+  const privateFollowers = countBy(followers, (u) => u.isPrivate);
+  const publicFollowers = Math.max(0, frCount - privateFollowers);
+  const followersPrivacy = [
+    { key: "public", label: "public", value: publicFollowers, color: "#3dd68c" },
+    { key: "private", label: "private", value: privateFollowers, color: "#9a9aab" },
+  ];
+
+  // Verified among accounts you follow
+  const verifiedFollowing = countBy(following, (u) => u.isVerified);
+  const otherFollowing = Math.max(0, fCount - verifiedFollowing);
+  const followingVerified = [
+    { key: "verified", label: "verified", value: verifiedFollowing, color: "#6ea8fe" },
+    { key: "notVerified", label: "notVerified", value: otherFollowing, color: "#4a4a5a" },
+  ];
+
+  // Bot-risk tiers among followers (local heuristic, same as Bots section)
+  const scored = withBotScores(followers);
+  let riskHigh = 0;
+  let riskMid = 0;
+  let riskFlagged = 0;
+  let riskClean = 0;
+  for (const u of scored) {
+    const s = u.botScore ?? 0;
+    if (s >= 55) riskHigh += 1;
+    else if (s >= 30) riskMid += 1;
+    else if (s >= 25) riskFlagged += 1;
+    else riskClean += 1;
+  }
+  const followersBotRisk = [
+    { key: "riskHigh", label: "riskHigh", value: riskHigh, color: "#ff6b6b" },
+    { key: "riskMid", label: "riskMid", value: riskMid, color: "#f5a524" },
+    { key: "riskFlagged", label: "riskFlagged", value: riskFlagged, color: "#e8d44d" },
+    { key: "riskClean", label: "riskClean", value: riskClean, color: "#3dd68c" },
+  ];
+
   return {
     mutualRate,
     notBackRate,
@@ -156,6 +206,13 @@ function buildAnalyticsSummary(state) {
     followingSplit,
     followersSplit,
     networkMix,
+    audienceBalance,
+    followersPrivacy,
+    followingVerified,
+    followersBotRisk,
+    privateFollowers,
+    verifiedFollowing,
+    botFlaggedCount: riskHigh + riskMid + riskFlagged,
   };
 }
 
