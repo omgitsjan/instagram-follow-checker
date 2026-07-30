@@ -3,18 +3,19 @@
 [![CI](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-Chrome extension (**Manifest V3**) that shows your Instagram follow relationships using **your existing browser session** — no official API, no paywall, no backend.
+Chrome extension (**Manifest V3**, **v1.2**) for Instagram follow relationships, local analytics, and bot heuristics — all via **your existing browser session**. No official API, no paywall, no backend.
 
-| View | Meaning |
-|------|---------|
-| **Following** / **Followers** | Full lists (click the top tiles) |
-| **Mutual** | You follow them and they follow you |
-| **Not following back** | You follow them; they don’t follow you → optional **Unfollow** |
-| **You don’t follow** | They follow you; you don’t follow them → optional **Follow** |
+| Section | What you get |
+|---------|----------------|
+| **Relationships** | Following / Followers tiles; Mutual / Not back / You don’t follow |
+| **Analytics** | Doughnut charts from your list buckets (mutual / not back / not you) |
+| **Bots** | Heuristic “maybe bot” list (≥25 signals) with unfollow/remove actions |
+| **Posts** / **Admire** | Roadmap / coming soon |
+| **Settings** | Language EN/DE, open source, tip |
 
 > **Vibe-coded.** Built exploratively with AI — not production/enterprise software. Expect rough edges, Instagram breaking changes, and no support guarantee.
 
-**UI language:** English by default. **German** is supported via **Settings** (gear icon).
+**UI language:** English by default. **German** is supported via full-page **Settings**.
 
 ---
 
@@ -63,14 +64,15 @@ This repo is **not** advice to circumvent ToS. You are responsible for complying
 
 ## Features
 
-- Full **Following** and **Followers** lists (clickable top tiles)  
-- Relationship tabs: mutual / not following back / you don’t follow  
+- **Relationships:** full Following / Followers lists; mutual / not back / you don’t follow  
+- **Analytics:** pie/doughnut charts from list buckets  
+- **Bots:** local heuristics with unfollow / remove-follower style actions where available  
 - Profile pictures (with fallback via the Instagram tab)  
-- **Unfollow** / **Follow** actions from the popup  
+- **Unfollow** / **Follow** from relationship lists  
 - Search and JSON export  
 - Last result cached locally in the browser  
 - **English** default UI + **German** in Settings  
-- Settings: language, open-source link, PayPal tip  
+- Posts / Admire marked **coming soon**  
 - Everything local — **no** developer backend  
 
 ---
@@ -90,7 +92,7 @@ Relationship data is processed **locally in your browser**. Analysis results are
 ### Option A – Release ZIP (recommended)
 
 1. Download the latest **[Release](https://github.com/omgitsjan/instagram-follow-checker/releases)**  
-   (e.g. [`instagram-follow-checker-v1.0.0.zip`](https://github.com/omgitsjan/instagram-follow-checker/releases/download/v1.0.0/instagram-follow-checker-v1.0.0.zip))  
+   (e.g. [`instagram-follow-checker-v1.2.0.zip`](https://github.com/omgitsjan/instagram-follow-checker/releases/download/v1.2.0/instagram-follow-checker-v1.2.0.zip))  
 2. Unzip  
 3. Chrome → `chrome://extensions` → **Developer mode** → **Load unpacked**  
 4. Select the **unzipped folder**  
@@ -115,10 +117,10 @@ node scripts/package-zip.mjs
 
 1. Stay logged in on Instagram (tab open).  
 2. Start analysis and wait (large accounts take longer; requests are paced).  
-3. Use top tiles for full lists, bottom tabs for relationship breakdown.  
+3. Use **Relationships** for tiles/tabs; **Analytics** for charts; **Bots** for heuristic flags.  
 4. Optionally follow/unfollow; use search or export.  
-5. On errors (429, login): wait, reload, try again.  
-6. **Settings** → switch **English / Deutsch**, open GitHub, or tip via PayPal.  
+5. **Settings** → language EN/DE, GitHub, tip.  
+6. On errors (429, login): wait, reload, try again.  
 
 ---
 
@@ -127,10 +129,12 @@ node scripts/package-zip.mjs
 | File | Role |
 |------|------|
 | `manifest.json` | MV3, Instagram + CDN host permissions |
-| `content.js` | Runs on `instagram.com`, loads lists, follow/unfollow |
-| `popup.*` | UI: tiles, tabs, search, actions |
+| `content.js` | Runs on `instagram.com`, lists, follow/unfollow |
+| `popup.*` | UI: sections, tiles, charts, bots, settings |
+| `analytics.js` | Doughnut/pie charts from list buckets |
 | `i18n.js` | English + German strings |
 | `PRIVACY.md` | Privacy policy |
+| `docs/V1.2-CONCEPT.md` | v1.2 product concept notes |
 | `store/` | Chrome Web Store assets & form answers |
 
 Data stays in the browser (`chrome.storage.local` for language + last result).
@@ -153,7 +157,7 @@ Lightweight pipeline (no app bundler, no Web Store deploy in CI):
 | Workflow | When | What |
 |----------|------|------|
 | **CI** (`ci.yml`) | Push/PR on `main` | Validate structure, JS syntax, ZIP artifact |
-| **Release** (`release.yml`) | Tag `v*` (e.g. `v1.0.0`) | Validate, tag = manifest version, GitHub Release + ZIP |
+| **Release** (`release.yml`) | Tag `v*` (e.g. `v1.2.0`) | Validate, tag = manifest version, GitHub Release + ZIP |
 
 Local checks:
 
@@ -161,14 +165,15 @@ Local checks:
 node scripts/validate-extension.mjs
 node --check content.js
 node --check popup.js
+node --check analytics.js
 node --check i18n.js
 ```
 
 Release example (bump `manifest.json` version first):
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
 ---

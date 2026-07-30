@@ -1,6 +1,6 @@
 name: Release
 
-# Tag: git tag v1.2.0 && git push origin v1.2.0
+# Tag: git tag v2.0.0 && git push origin v2.0.0
 on:
   push:
     tags:
@@ -28,6 +28,7 @@ jobs:
           node --check content.js
           node --check popup.js
           node --check i18n.js
+          node --check analytics.js
 
       - name: Check tag matches manifest version
         run: |
@@ -51,9 +52,11 @@ jobs:
             popup.js \
             popup.css \
             i18n.js \
+            analytics.js \
             icons \
             LICENSE \
-            README.md
+            README.md \
+            PRIVACY.md
           echo "ZIP=$ZIP" >> "$GITHUB_ENV"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
@@ -64,7 +67,7 @@ jobs:
           body: |
             ## Instagram Follow Checker v${{ env.VERSION }}
 
-            Unpacked Chrome extension ZIP (English UI + DE/EN language switch).
+            Unpacked Chrome extension ZIP (Relationships, Analytics, Bots, Liked).
 
             ### Install
             1. Download and unzip

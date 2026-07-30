@@ -14,20 +14,29 @@
         </div>
         <div class="brand-text">
           <h1 data-i18n="appTitle">Follow Checker</h1>
-          <p class="subtitle" id="accountLine" data-i18n="tagline">
+          <p class="subtitle account-line" id="accountLine" data-i18n="tagline">
             No API · your session only
           </p>
         </div>
       </div>
       <button
         id="settingsBtn"
-        class="btn icon-btn"
+        class="btn icon-btn settings-toggle"
         type="button"
         data-i18n-title="settings"
         title="Settings"
         aria-label="Settings"
+        aria-expanded="false"
+        aria-controls="settingsPanel"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg
+          class="icon-gear"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
           <path
             d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
             stroke="currentColor"
@@ -40,84 +49,103 @@
             stroke-linejoin="round"
           />
         </svg>
+        <svg
+          class="icon-close"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M6 6l12 12M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
       </button>
     </header>
 
-    <!-- Settings panel -->
-    <div id="settingsPanel" class="settings-panel hidden" role="dialog" aria-labelledby="settingsTitle">
-      <div class="settings-head">
-        <h2 id="settingsTitle" data-i18n="settingsTitle">Settings</h2>
-        <button id="settingsClose" class="btn icon-btn" type="button" data-i18n-title="close" title="Close">
-          ✕
-        </button>
-      </div>
-
-      <div class="settings-block">
-        <label class="settings-label" for="langSelect" data-i18n="language">Language</label>
-        <div class="lang-switch" role="group" aria-label="Language">
-          <button type="button" class="lang-btn active" data-lang="en" id="langEn">
-            <!-- SVG flags (Windows often can't render flag emoji) -->
-            <span class="lang-flag" aria-hidden="true">
-              <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
-                <rect width="60" height="40" fill="#012169"/>
-                <path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/>
-                <path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="5"/>
-                <path d="M30,0 V40 M0,20 H60" stroke="#fff" stroke-width="14"/>
-                <path d="M30,0 V40 M0,20 H60" stroke="#C8102E" stroke-width="8"/>
-              </svg>
-            </span>
-            <span>English</span>
-          </button>
-          <button type="button" class="lang-btn" data-lang="de" id="langDe">
-            <span class="lang-flag" aria-hidden="true">
-              <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
-                <rect width="60" height="13.33" y="0" fill="#000"/>
-                <rect width="60" height="13.33" y="13.33" fill="#D00"/>
-                <rect width="60" height="13.34" y="26.66" fill="#FFCE00"/>
-              </svg>
-            </span>
-            <span>Deutsch</span>
-          </button>
+    <!-- Settings full page (header gear becomes × to close) -->
+    <div id="settingsPanel" class="settings-page hidden" role="dialog" aria-labelledby="settingsTitle">
+      <div class="settings-page-inner">
+        <div class="settings-head">
+          <h2 id="settingsTitle" data-i18n="settingsTitle">Settings</h2>
         </div>
-      </div>
 
-      <div class="settings-block">
-        <a
-          id="repoLink"
-          class="settings-link"
-          href="https://github.com/omgitsjan/instagram-follow-checker"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span class="settings-link-icon" aria-hidden="true">⟨/⟩</span>
-          <span>
-            <strong data-i18n="openSource">Open source</strong>
-            <small data-i18n="openSourceDesc">View code on GitHub</small>
-          </span>
-        </a>
-      </div>
+        <div class="settings-scroll">
+          <div class="settings-block">
+            <label class="settings-label" for="langSelect" data-i18n="language">Language</label>
+            <div class="lang-switch" role="group" aria-label="Language">
+              <button type="button" class="lang-btn active" data-lang="en" id="langEn">
+                <span class="lang-flag" aria-hidden="true">
+                  <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="40" fill="#012169"/>
+                    <path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/>
+                    <path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="5"/>
+                    <path d="M30,0 V40 M0,20 H60" stroke="#fff" stroke-width="14"/>
+                    <path d="M30,0 V40 M0,20 H60" stroke="#C8102E" stroke-width="8"/>
+                  </svg>
+                </span>
+                <span>English</span>
+              </button>
+              <button type="button" class="lang-btn" data-lang="de" id="langDe">
+                <span class="lang-flag" aria-hidden="true">
+                  <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="13.33" y="0" fill="#000"/>
+                    <rect width="60" height="13.33" y="13.33" fill="#D00"/>
+                    <rect width="60" height="13.34" y="26.66" fill="#FFCE00"/>
+                  </svg>
+                </span>
+                <span>Deutsch</span>
+              </button>
+            </div>
+          </div>
 
-      <div class="settings-block">
-        <a
-          id="tipLink"
-          class="settings-link tip"
-          href="https://www.paypal.com/paypalme/IanPRTZ"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span class="settings-link-icon" aria-hidden="true">♥</span>
-          <span>
-            <strong data-i18n="tipMe">Tip me</strong>
-            <small data-i18n="tipMeDesc">Support via PayPal</small>
-          </span>
-        </a>
+          <div class="settings-block">
+            <a
+              id="repoLink"
+              class="settings-link"
+              href="https://github.com/omgitsjan/instagram-follow-checker"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="settings-link-icon" aria-hidden="true">⟨/⟩</span>
+              <span>
+                <strong data-i18n="openSource">Open source</strong>
+                <small data-i18n="openSourceDesc">View code on GitHub</small>
+              </span>
+            </a>
+          </div>
+
+          <div class="settings-block">
+            <a
+              id="tipLink"
+              class="settings-link tip"
+              href="https://www.paypal.com/paypalme/IanPRTZ"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="settings-link-icon" aria-hidden="true">♥</span>
+              <span>
+                <strong data-i18n="tipMe">Tip me</strong>
+                <small data-i18n="tipMeDesc">Support via PayPal</small>
+              </span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
+    <div id="appMain" class="app-main">
     <section class="controls" id="mainControls">
       <button id="startBtn" class="btn primary" type="button" data-i18n="startAnalysis">
         Start analysis
       </button>
+      <p class="section-hint controls-hint" data-i18n="globalAnalysisHint">
+        One analysis fills Relationships, Analytics and Bots. Posts &amp; Admire are coming soon.
+      </p>
       <p id="status" class="status" role="status" data-i18n-html="statusIdle">
         Open <strong>instagram.com</strong> (logged in) and start the analysis.
       </p>
@@ -127,62 +155,177 @@
       </div>
     </section>
 
-    <!-- Top: full lists (clickable) -->
-    <section id="stats" class="stats stats-two hidden" role="tablist" aria-label="Lists">
-      <button type="button" class="stat stat-btn" data-tab="following" id="tileFollowing" role="tab" aria-selected="false" data-i18n-title="viewFollowing" title="Show full following list">
-        <span id="statFollowing">0</span>
-        <label data-i18n="following">Following</label>
-      </button>
-      <button type="button" class="stat stat-btn" data-tab="followers" id="tileFollowers" role="tab" aria-selected="false" data-i18n-title="viewFollowers" title="Show full followers list">
-        <span id="statFollowers">0</span>
-        <label data-i18n="followers">Followers</label>
-      </button>
-    </section>
+    <!-- Tip / confirm popover -->
+    <div id="tipModal" class="tip-modal hidden" role="dialog" aria-modal="true" aria-labelledby="tipModalTitle">
+      <div class="tip-modal-card">
+        <h2 id="tipModalTitle" data-i18n="tipModalTitle">Quick note</h2>
+        <p id="tipModalBody" class="tip-modal-body" data-i18n-html="tipModalBody">
+          You’re running this again on your own responsibility. If the tool helps you, a small tip is appreciated ♥
+        </p>
+        <div class="tip-modal-actions">
+          <a
+            id="tipModalTip"
+            class="btn primary"
+            href="https://www.paypal.com/paypalme/IanPRTZ"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="tipMe"
+            >Tip me</a
+          >
+          <button type="button" id="tipModalContinue" class="btn ghost" data-i18n="tipModalContinue">
+            Continue anyway
+          </button>
+          <button type="button" id="tipModalCancel" class="btn ghost" data-i18n="close">Cancel</button>
+        </div>
+      </div>
+    </div>
 
-    <!-- Bottom: relationship breakdown -->
-    <nav class="tabs hidden" id="tabs" role="tablist">
-      <button class="tab active" data-tab="mutual" role="tab" aria-selected="true">
-        <span data-i18n="tabMutual">Mutual</span>
-        <span class="badge" id="badgeMutual">0</span>
+    <!-- Primary sections (v1.2) -->
+    <nav id="sectionNav" class="section-nav hidden" role="tablist" aria-label="Sections">
+      <button type="button" class="section-btn active" data-section="relationships" data-i18n="navRelationships">
+        Relationships
       </button>
-      <button class="tab" data-tab="notBack" role="tab" aria-selected="false">
-        <span data-i18n="tabNotBack">Not following back</span>
-        <span class="badge warn" id="badgeNotBack">0</span>
+      <button type="button" class="section-btn" data-section="analytics" data-i18n="navAnalytics">
+        Analytics
       </button>
-      <button class="tab" data-tab="notMe" role="tab" aria-selected="false">
-        <span data-i18n="tabNotMe">You don’t follow</span>
-        <span class="badge info" id="badgeNotMe">0</span>
+      <button type="button" class="section-btn" data-section="bots" data-i18n="navBots">
+        Bots
+      </button>
+      <button type="button" class="section-btn" data-section="liked" data-i18n="navPosts">
+        Posts
+      </button>
+      <button
+        type="button"
+        class="section-btn"
+        data-section="admire"
+        id="navAdmire"
+        data-i18n="navAdmire"
+      >
+        Admire
       </button>
     </nav>
 
-    <div class="search-row hidden" id="searchRow">
-      <input
-        id="searchInput"
-        type="search"
-        data-i18n-placeholder="searchPlaceholder"
-        placeholder="Search username…"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <button
-        id="exportBtn"
-        class="btn ghost"
-        type="button"
-        data-i18n="export"
-        data-i18n-title="exportTitle"
-        title="Export as JSON"
-      >
-        Export
-      </button>
+    <!-- Relationships section -->
+    <div id="section-relationships" class="section-body">
+      <section id="stats" class="stats stats-two hidden" role="tablist" aria-label="Lists">
+        <button type="button" class="stat stat-btn" data-tab="following" id="tileFollowing" role="tab" aria-selected="false" data-i18n-title="viewFollowing" title="Show full following list">
+          <span id="statFollowing">0</span>
+          <label data-i18n="following">Following</label>
+        </button>
+        <button type="button" class="stat stat-btn" data-tab="followers" id="tileFollowers" role="tab" aria-selected="false" data-i18n-title="viewFollowers" title="Show full followers list">
+          <span id="statFollowers">0</span>
+          <label data-i18n="followers">Followers</label>
+        </button>
+      </section>
+
+      <nav class="tabs hidden" id="tabs" role="tablist">
+        <button class="tab active" data-tab="mutual" role="tab" aria-selected="true">
+          <span data-i18n="tabMutual">Mutual</span>
+          <span class="badge" id="badgeMutual">0</span>
+        </button>
+        <button class="tab" data-tab="notBack" role="tab" aria-selected="false">
+          <span data-i18n="tabNotBack">Not following back</span>
+          <span class="badge warn" id="badgeNotBack">0</span>
+        </button>
+        <button class="tab" data-tab="notMe" role="tab" aria-selected="false">
+          <span data-i18n="tabNotMe">You don’t follow</span>
+          <span class="badge info" id="badgeNotMe">0</span>
+        </button>
+      </nav>
+
+      <div class="search-row hidden" id="searchRow">
+        <input
+          id="searchInput"
+          type="search"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Search username…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button
+          id="exportBtn"
+          class="btn ghost"
+          type="button"
+          data-i18n="export"
+          data-i18n-title="exportTitle"
+          title="Export as JSON"
+        >
+          Export
+        </button>
+      </div>
+
+      <main id="panels" class="panels hidden">
+        <section id="panel-following" class="panel" role="tabpanel" hidden></section>
+        <section id="panel-followers" class="panel" role="tabpanel" hidden></section>
+        <section id="panel-mutual" class="panel active" role="tabpanel"></section>
+        <section id="panel-notBack" class="panel" role="tabpanel" hidden></section>
+        <section id="panel-notMe" class="panel" role="tabpanel" hidden></section>
+      </main>
     </div>
 
-    <main id="panels" class="panels hidden">
-      <section id="panel-following" class="panel" role="tabpanel" hidden></section>
-      <section id="panel-followers" class="panel" role="tabpanel" hidden></section>
-      <section id="panel-mutual" class="panel active" role="tabpanel"></section>
-      <section id="panel-notBack" class="panel" role="tabpanel" hidden></section>
-      <section id="panel-notMe" class="panel" role="tabpanel" hidden></section>
-    </main>
+    <!-- Analytics: charts from relationship data only -->
+    <div id="section-analytics" class="section-body hidden">
+      <p class="section-hint" data-i18n="analyticsHint">
+        Charts from your last analysis lists — no extra Instagram profile lookups.
+      </p>
+      <div id="analyticsSummary" class="metric-grid"></div>
+      <main class="panels panels-always">
+        <section id="panel-analytics" class="panel charts-panel"></section>
+      </main>
+    </div>
+
+    <!-- Bots section -->
+    <div id="section-bots" class="section-body hidden">
+      <p class="section-hint" data-i18n-html="botsHint">
+        <strong>Heuristic only</strong> — not proof of bots. Sorted by risk score among your followers.
+      </p>
+      <div class="search-row" id="botSearchRow">
+        <input
+          id="botSearchInput"
+          type="search"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Search username…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <main class="panels panels-always">
+        <section id="panel-bots" class="panel"></section>
+      </main>
+    </div>
+
+    <!-- Posts — coming soon -->
+    <div id="section-liked" class="section-body hidden">
+      <div class="coming-soon">
+        <div class="coming-soon-badge" data-i18n="comingSoon">Coming soon</div>
+        <h3 data-i18n="postsComingTitle">Post insights</h3>
+        <p data-i18n="postsComingBody">
+          Ranking your posts by likes/comments and seeing who likes you most often.
+        </p>
+        <ul class="coming-soon-list">
+          <li data-i18n="postsSoon1">Your posts ranked by engagement</li>
+          <li data-i18n="postsSoon2">Top fans by how many of your posts they liked</li>
+          <li data-i18n="postsSoon3">Recency-aware ranking when like counts are equal</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Admire — coming soon -->
+    <div id="section-admire" class="section-body hidden">
+      <div class="coming-soon">
+        <div class="coming-soon-badge" data-i18n="comingSoon">Coming soon</div>
+        <h3 data-i18n="admireComingTitle">Admirers &amp; silent viewers</h3>
+        <p data-i18n="admireComingBody">
+          See who watches you without always following — via session-only story &amp; highlight data when Instagram allows it.
+        </p>
+        <ul class="coming-soon-list">
+          <li data-i18n="admireSoon1">Current story viewers (who watched your active stories)</li>
+          <li data-i18n="admireSoon2">Highlight viewers (who watched story highlights)</li>
+          <li data-i18n="admireSoon3">People who view/like you but don’t follow (when lists are available without extra API keys)</li>
+          <li data-i18n="admireSoon4">Repeat viewers ranked higher than one-time visitors</li>
+        </ul>
+      </div>
+    </div>
 
     <footer class="footer">
       <p id="footerText" data-i18n="footer">
@@ -190,8 +333,10 @@
         Private accounts → “Requested” instead of instant follow.
       </p>
     </footer>
+    </div><!-- /#appMain -->
 
     <script src="i18n.js"></script>
+    <script src="analytics.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
