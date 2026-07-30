@@ -101,6 +101,11 @@ function applyStaticI18n() {
     btn.classList.toggle("active", btn.dataset.lang === state.lang);
   });
 
+  // Keep gear/X label in the open language
+  if (typeof isSettingsOpen === "function") {
+    syncSettingsToggleUi(isSettingsOpen());
+  }
+
   if (!state.me?.username) {
     accountLine.textContent = t("tagline");
   }
