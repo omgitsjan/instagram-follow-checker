@@ -1,13 +1,13 @@
-Instagram Follow Checker – see who follows you back
+Instagram Follow Checker – relationships, charts & bots
 
-Find mutual follows, people who don’t follow you back, and followers you don’t follow yet. Free, open source, and works with your normal Instagram login in Chrome. No Instagram API keys. No paid unlock. No data sent to our servers.
+Find mutual follows, people who don’t follow you back, and followers you don’t follow yet — plus local analytics charts and bot-style heuristics. Free, open source, and works with your normal Instagram login in Chrome. No Instagram API keys. No paid unlock. No data sent to our servers.
 
 
 ═══════════════════════════════════════
 WHAT IT DOES
 ═══════════════════════════════════════
 
-Instagram Follow Checker compares your Following list with your Followers list and organizes people into three clear tabs:
+Instagram Follow Checker compares your Following list with your Followers list and organizes people into clear relationship views:
 
 • Mutual – you follow them and they follow you
 • Not following back – you follow them, they don’t follow you
@@ -19,6 +19,11 @@ From the lists you can:
 • Follow accounts that follow you (private accounts may show as “Requested”)
 • Search by username
 • Export results as JSON for your own records
+
+v1.2 also adds:
+• Analytics – doughnut/pie charts from your list buckets (mutual / not back / not you)
+• Bots – local heuristic signals with optional actions
+• Posts / Admire – marked coming soon
 
 Profile pictures are shown when available. Your last analysis can be restored when you reopen the extension.
 
@@ -58,6 +63,8 @@ FEATURES
 ═══════════════════════════════════════
 
 ✓ Three relationship lists: mutual / not following back / you don’t follow
+✓ Analytics charts from list data
+✓ Bot heuristics with optional unfollow/remove-style actions
 ✓ Follow and unfollow actions from the popup
 ✓ Profile pictures with fallback loading
 ✓ Search within each list
@@ -125,4 +132,4 @@ LANGUAGES
 SHORT SUMMARY
 ═══════════════════════════════════════
 
-Instagram Follow Checker helps you understand your follow relationships in Chrome: who is mutual, who doesn’t follow back, and who you don’t follow yet—with optional follow/unfollow actions, search, and export. Local, open source, free. Use responsibly and at your own risk.
+Instagram Follow Checker helps you understand your follow relationships in Chrome: who is mutual, who doesn’t follow back, and who you don’t follow yet—plus charts and bot heuristics. Local, open source, free. Use responsibly and at your own risk.

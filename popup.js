@@ -15,7 +15,7 @@ const accountLine = $("accountLine");
 const headerLogo = $("headerLogo");
 const settingsBtn = $("settingsBtn");
 const settingsPanel = $("settingsPanel");
-const settingsClose = $("settingsClose");
+const appMain = $("appMain");
 
 const state = {
   me: null,
@@ -25,14 +25,36 @@ const state = {
   notFollowingBack: [],
   notFollowedByMe: [],
   counts: null,
+  liked: [],
+  topFans: [],
+  postsScannedForLikers: 0,
+  postsTopic: "posts",
+  postsQuery: "",
   activeTab: "mutual",
+  activeSection: "relationships",
+  analyticsCache: null,
   query: "",
+  botQuery: "",
   igTabId: null,
   lang: "en",
   statusIsIdle: true,
+  likedLoaded: false,
+  analysisRuns: 0,
+  postsLoads: 0,
+  analysisRunning: false,
 };
 
+const BOT_SCORE_MIN = 25;
+const tipModal = $("tipModal");
+const tipModalContinue = $("tipModalContinue");
+const tipModalCancel = $("tipModalCancel");
+let tipModalResolver = null;
+
 const ALL_TABS = ["following", "followers", "mutual", "notBack", "notMe"];
+const SECTIONS = ["relationships", "analytics", "bots", "liked", "admire"];
+const sectionNav = $("sectionNav");
+const botSearchInput = $("botSearchInput");
+const navAdmire = $("navAdmire");
 
 /* ---------- i18n ---------- */
 
@@ -79,6 +101,11 @@ function applyStaticI18n() {
     btn.classList.toggle("active", btn.dataset.lang === state.lang);
   });
 
+  // Keep gear/X label in the open language
+  if (typeof isSettingsOpen === "function") {
+    syncSettingsToggleUi(isSettingsOpen());
+  }
+
   if (!state.me?.username) {
     accountLine.textContent = t("tagline");
   }
@@ -86,6 +113,8 @@ function applyStaticI18n() {
   // Re-render dynamic lists so button labels update
   if (state.counts) {
     renderAll();
+    renderAnalytics();
+    renderBots();
     if (state.statusIsIdle === false && state.counts) {
       setStatus(
         t("doneSummary", {
@@ -98,6 +127,311 @@ function applyStaticI18n() {
       state.statusIsIdle = false;
     }
   }
+}
+
+function switchSection(name) {
+  if (!SECTIONS.includes(name)) name = "relationships";
+  state.activeSection = name;
+  // Leaving settings full-page if open
+  closeSettings();
+
+  document.querySelectorAll(".section-btn").forEach((btn) => {
+    const on = btn.dataset.section === name;
+    btn.classList.toggle("active", on);
+  });
+
+  for (const s of SECTIONS) {
+    const el = $(`section-${s}`);
+    if (!el) continue;
+    el.classList.toggle("hidden", s !== name);
+  }
+
+  if (name === "analytics") renderAnalytics();
+  if (name === "bots") renderBots();
+  // posts + admire are static "coming soon" panels
+}
+
+function miniAvatar(u) {
+  if (u.profilePic) {
+    const img = document.createElement("img");
+    img.className = "avatar";
+    img.style.width = "28px";
+    img.style.height = "28px";
+    img.src = u.profilePic;
+    img.alt = "";
+    img.referrerPolicy = "no-referrer";
+    img.loading = "lazy";
+    return img;
+  }
+  const d = placeholderAvatar(u.username);
+  d.style.width = "28px";
+  d.style.height = "28px";
+  d.style.fontSize = "11px";
+  return d;
+}
+
+function chartLabel(key) {
+  const map = {
+    mutual: t("chartMutual"),
+    notBack: t("chartNotBack"),
+    notMe: t("chartNotMe"),
+    following: t("following"),
+    followers: t("followers"),
+    public: t("chartPublic"),
+    private: t("chartPrivate"),
+    verified: t("chartVerified"),
+    notVerified: t("chartNotVerified"),
+    riskHigh: t("chartRiskHigh"),
+    riskMid: t("chartRiskMid"),
+    riskFlagged: t("chartRiskFlagged"),
+    riskClean: t("chartRiskClean"),
+  };
+  return map[key] || key;
+}
+
+function buildChartCard(title, segments, centerText, centerSub) {
+  const card = document.createElement("div");
+  card.className = "chart-card";
+
+  const h = document.createElement("h3");
+  h.className = "chart-title";
+  h.textContent = title;
+  card.appendChild(h);
+
+  const body = document.createElement("div");
+  body.className = "chart-body";
+
+  const canvas = document.createElement("canvas");
+  canvas.className = "chart-canvas";
+  body.appendChild(canvas);
+
+  const legend = document.createElement("ul");
+  legend.className = "chart-legend";
+  const total = segments.reduce((s, x) => s + (Number(x.value) || 0), 0);
+  for (const seg of segments) {
+    const li = document.createElement("li");
+    const pct = total > 0 ? Math.round(((Number(seg.value) || 0) / total) * 100) : 0;
+    li.innerHTML = `
+      <span class="swatch" style="background:${seg.color}"></span>
+      <span class="lab">${escapeHtml(chartLabel(seg.key || seg.label))}</span>
+      <span class="num">${escapeHtml(String(seg.value))} · ${pct}%</span>`;
+    legend.appendChild(li);
+  }
+  body.appendChild(legend);
+  card.appendChild(body);
+
+  // Draw after in DOM
+  requestAnimationFrame(() => {
+    if (window.IGAnalytics?.drawDoughnut) {
+      window.IGAnalytics.drawDoughnut(canvas, segments, {
+        size: 132,
+        hole: 0.58,
+        centerText,
+        centerSub,
+      });
+    }
+  });
+
+  return card;
+}
+
+function renderAnalytics() {
+  const summaryEl = $("analyticsSummary");
+  const panel = $("panel-analytics");
+  if (!summaryEl || !panel || !window.IGAnalytics) return;
+
+  if (!state.counts) {
+    summaryEl.innerHTML = `<div class="empty" style="grid-column:1/-1">${escapeHtml(t("needAnalysisFirst"))}</div>`;
+    panel.replaceChildren();
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = t("needAnalysisFirst");
+    panel.appendChild(empty);
+    state.analyticsCache = null;
+    return;
+  }
+
+  const A = window.IGAnalytics;
+  const s = A.buildAnalyticsSummary(state);
+  state.analyticsCache = s;
+
+  summaryEl.innerHTML = `
+    <div class="metric"><strong>${A.formatCount(s.followingCount)}</strong><span>${escapeHtml(t("following"))}</span></div>
+    <div class="metric"><strong>${A.formatCount(s.followersCount)}</strong><span>${escapeHtml(t("followers"))}</span></div>
+    <div class="metric"><strong>${A.formatPct(s.mutualRate)}</strong><span>${escapeHtml(t("metricMutualRate"))}</span></div>
+    <div class="metric"><strong>${A.formatPct(s.notBackRate)}</strong><span>${escapeHtml(t("metricNotBackRate"))}</span></div>
+    <div class="metric"><strong>${A.formatPct(s.oneWayFollowerRate)}</strong><span>${escapeHtml(t("metricOneWayFollowers"))}</span></div>
+    <div class="metric"><strong>${A.formatCount(s.botFlaggedCount)}</strong><span>${escapeHtml(t("metricBotFlagged"))}</span></div>
+  `;
+
+  panel.replaceChildren();
+
+  const wrap = document.createElement("div");
+  wrap.className = "charts-grid";
+  wrap.appendChild(
+    buildChartCard(
+      t("chartFollowingTitle"),
+      s.followingSplit,
+      A.formatCount(s.followingCount),
+      t("following")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartFollowersTitle"),
+      s.followersSplit,
+      A.formatCount(s.followersCount),
+      t("followers")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartNetworkTitle"),
+      s.networkMix,
+      A.formatPct(s.mutualRate),
+      t("metricMutualRate")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartAudienceTitle"),
+      s.audienceBalance,
+      A.formatCount(s.followingCount + s.followersCount),
+      t("chartAudienceCenter")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartPrivacyTitle"),
+      s.followersPrivacy,
+      A.formatCount(s.followersCount),
+      t("followers")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartVerifiedTitle"),
+      s.followingVerified,
+      A.formatCount(s.verifiedFollowing),
+      t("chartVerified")
+    )
+  );
+  wrap.appendChild(
+    buildChartCard(
+      t("chartBotRiskTitle"),
+      s.followersBotRisk,
+      A.formatCount(s.botFlaggedCount),
+      t("metricBotFlagged")
+    )
+  );
+  panel.appendChild(wrap);
+}
+
+function renderBots() {
+  const panel = $("panel-bots");
+  if (!panel || !window.IGAnalytics) return;
+  panel.replaceChildren();
+
+  if (!state.followers.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = state.counts ? t("botNeedFollowers") : t("needAnalysisFirst");
+    panel.appendChild(empty);
+    return;
+  }
+
+  // Hide low-risk accounts (score < 25) — most likely not bots
+  let list = window.IGAnalytics.sortByBotScoreDesc(state.followers).filter(
+    (u) => (u.botScore ?? 0) >= BOT_SCORE_MIN
+  );
+  const q = state.botQuery.trim().toLowerCase();
+  if (q) {
+    list = list.filter(
+      (u) =>
+        u.username.toLowerCase().includes(q) ||
+        (u.fullName || "").toLowerCase().includes(q)
+    );
+  }
+
+  if (!list.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = q ? t("noSearchResults") : t("botsNoneAboveThreshold");
+    panel.appendChild(empty);
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const u of list.slice(0, 200)) {
+    const row = document.createElement("div");
+    row.className = "user-card";
+    row.dataset.userId = u.id;
+
+    const link = document.createElement("a");
+    link.className = "user-link";
+    link.href = `https://www.instagram.com/${encodeURIComponent(u.username)}/`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.appendChild(buildAvatar(u));
+    const meta = document.createElement("div");
+    meta.className = "user-meta";
+    const iFollow = state.following.some((x) => x.id === u.id);
+    const sub = [
+      u.followerCount != null
+        ? `${window.IGAnalytics.formatCount(u.followerCount)} fl.`
+        : null,
+      u.followingCount != null
+        ? `${window.IGAnalytics.formatCount(u.followingCount)} fg.`
+        : null,
+      (u.botReasons || []).slice(0, 2).join(", "),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    meta.innerHTML = `<div class="name">@${escapeHtml(u.username)}</div><div class="full">${escapeHtml(sub)}</div>`;
+    link.appendChild(meta);
+    row.appendChild(link);
+
+    const actions = document.createElement("div");
+    actions.className = "user-actions";
+
+    const pill = document.createElement("span");
+    pill.className =
+      "score-pill " + (u.botScore >= 55 ? "high" : u.botScore >= 30 ? "mid" : "low");
+    pill.textContent = t("botScore", { n: u.botScore });
+    actions.appendChild(pill);
+
+    // Remove from your followers
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn action remove-follower";
+    removeBtn.textContent = t("removeFollower");
+    removeBtn.title = t("removeFollowerUser", { user: u.username });
+    removeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleFriendship(u, "remove_follower", "bots", removeBtn, row);
+    });
+    actions.appendChild(removeBtn);
+
+    // Unfollow if you follow them
+    if (iFollow) {
+      const unf = document.createElement("button");
+      unf.type = "button";
+      unf.className = "btn action unfollow";
+      unf.textContent = t("unfollow");
+      unf.title = t("unfollowUser", { user: u.username });
+      unf.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleFriendship(u, "unfollow", "bots", unf, row);
+      });
+      actions.appendChild(unf);
+    }
+
+    row.appendChild(actions);
+    frag.appendChild(row);
+  }
+  panel.appendChild(frag);
 }
 
 async function setLanguage(lang) {
@@ -119,40 +453,31 @@ function setHeaderLogoFallback() {
   headerLogo.innerHTML = '<span class="logo-fallback">IG</span>';
 }
 
-function setHeaderAccount(me) {
-  if (!me?.username) {
-    accountLine.textContent = t("tagline");
-    setHeaderLogoFallback();
-    return;
-  }
-
-  accountLine.textContent = `@${me.username}`;
+function setHeaderPhoto(person) {
   if (!headerLogo) return;
-
-  const pic = me.profilePicData || me.profilePic;
-  if (!pic) {
+  if (!person?.profilePic && !person?.profilePicData) {
     setHeaderLogoFallback();
     return;
   }
-
+  const pic = person.profilePicData || person.profilePic;
   const img = document.createElement("img");
   img.className = "logo-photo";
-  img.alt = `@${me.username}`;
+  img.alt = person.username ? `@${person.username}` : "";
   img.src = pic;
   img.addEventListener(
     "error",
     async () => {
-      if (me.profilePic && !me.profilePicData) {
+      if (person.profilePic && !person.profilePicData) {
         try {
           const tabId = await resolveIgTabId();
           if (tabId) {
             await ensureContentScript(tabId);
             const res = await chrome.tabs.sendMessage(tabId, {
               type: "FETCH_AVATAR",
-              url: me.profilePic,
+              url: person.profilePic,
             });
             if (res?.ok && res.dataUrl) {
-              me.profilePicData = res.dataUrl;
+              person.profilePicData = res.dataUrl;
               img.src = res.dataUrl;
               return;
             }
@@ -173,21 +498,56 @@ function setHeaderAccount(me) {
     },
     { once: true }
   );
-
   headerLogo.classList.add("has-photo");
   headerLogo.replaceChildren(img);
 }
 
+function refreshHeaderDisplay() {
+  const me = state.me;
+  if (me?.username) {
+    accountLine.removeAttribute("data-i18n");
+    accountLine.textContent = `@${me.username}`;
+    setHeaderPhoto(me);
+    return;
+  }
+
+  accountLine.setAttribute("data-i18n", "tagline");
+  accountLine.textContent = t("tagline");
+  setHeaderLogoFallback();
+}
+
+function setHeaderAccount(me) {
+  if (me?.username) {
+    state.me = { ...(state.me || {}), ...me };
+  }
+  refreshHeaderDisplay();
+}
+
 function setStatus(text, kind = "") {
+  // Final / idle messages live above the progress area — not during loading
+  show(statusEl, true);
   statusEl.innerHTML = text;
   statusEl.className = "status" + (kind ? ` ${kind}` : "");
   state.statusIsIdle = false;
 }
 
 function setIdleStatus() {
+  show(statusEl, true);
   statusEl.innerHTML = t("statusIdle");
   statusEl.className = "status";
   state.statusIsIdle = true;
+}
+
+/** Show only the bar + one line under it (hide duplicate top status). */
+function setProgressUi(active, text = "") {
+  show(progressWrap, active);
+  if (active) {
+    show(statusEl, false);
+    if (text) progressText.textContent = String(text).replace(/<[^>]+>/g, "");
+  } else {
+    show(statusEl, true);
+    progressText.textContent = "";
+  }
 }
 
 function show(el, yes = true) {
@@ -371,6 +731,37 @@ async function handleFriendship(u, action, listKey, btn, row) {
       return;
     }
 
+    if (action === "remove_follower") {
+      // They no longer follow you
+      removeUserFromLists(u.id, ["followers", "mutual", "notMe", "notFollowedByMe"]);
+      // If you still follow them → not following back
+      if (state.following.some((x) => x.id === u.id)) {
+        if (!state.notFollowingBack.some((x) => x.id === u.id)) {
+          state.notFollowingBack.push(u);
+          state.notFollowingBack.sort((a, b) =>
+            a.username.localeCompare(b.username, undefined, {
+              sensitivity: "base",
+            })
+          );
+        }
+      }
+      if (state.counts) {
+        state.counts.followers = state.followers.length;
+        state.counts.mutual = state.mutual.length;
+        state.counts.notFollowedByMe = state.notFollowedByMe.length;
+        state.counts.notFollowingBack = state.notFollowingBack.length;
+      }
+      setStatus(t("followerRemoved", { user: escapeHtml(u.username) }), "ok");
+      row.classList.add("removing");
+      setTimeout(() => {
+        row.remove();
+        refreshPanelsAfterAction();
+      }, 180);
+      updateBadgesAndStats();
+      persistState();
+      return;
+    }
+
     if (action === "unfollow") {
       // Remove from following-related lists; keep on followers if they still follow
       removeUserFromLists(u.id, ["following", "mutual", "notBack"]);
@@ -392,6 +783,13 @@ async function handleFriendship(u, action, listKey, btn, row) {
         }
       }
       setStatus(t("unfollowed", { user: escapeHtml(u.username) }), "ok");
+      // From bots list: stay visible (still a follower) but drop unfollow control
+      if (listKey === "bots") {
+        updateBadgesAndStats();
+        persistState();
+        renderBots();
+        return;
+      }
     } else {
       // follow: add to following; if they follow you → mutual, else notBack
       if (!state.following.some((x) => x.id === u.id)) {
@@ -480,6 +878,9 @@ function refreshPanelsAfterAction() {
   renderAll();
   // keep current tab visible after re-render
   switchTab(state.activeTab, { force: true });
+  state.analyticsCache = null;
+  if (state.activeSection === "analytics") renderAnalytics();
+  if (state.activeSection === "bots") renderBots();
 }
 
 function updateBadgesAndStats() {
@@ -640,33 +1041,97 @@ function formatProgress(msg) {
       msg.total != null ? t("totalApprox", { n: msg.total }) : "";
     return t("progressFollowers", { loaded: msg.loaded ?? 0, total });
   }
+  if (msg.stage === "enrich") {
+    return t("progressEnrich", {
+      target: msg.target || "",
+      enriched: msg.enriched ?? 0,
+      total: msg.total ?? 0,
+    });
+  }
   return msg.message || t("loading");
 }
 
+/** Confirm re-run / second heavy action with tip popover */
+function askTipConfirm() {
+  return new Promise((resolve) => {
+    tipModalResolver = resolve;
+    if (!tipModal) {
+      resolve(true);
+      return;
+    }
+    // Refresh i18n inside modal
+    tipModal.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (key) el.textContent = t(key);
+    });
+    tipModal.querySelectorAll("[data-i18n-html]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-html");
+      if (key) el.innerHTML = t(key);
+    });
+    show(tipModal, true);
+  });
+}
+
+function closeTipModal(result) {
+  show(tipModal, false);
+  if (tipModalResolver) {
+    const r = tipModalResolver;
+    tipModalResolver = null;
+    r(result);
+  }
+}
+
 function onProgress(msg) {
-  show(progressWrap, true);
+  setProgressUi(true);
   if (msg.stage === "user" && msg.me) {
     state.me = msg.me;
-    setHeaderAccount(msg.me);
-    progressFill.style.width = "10%";
+    refreshHeaderDisplay();
+    progressFill.style.width = "8%";
   }
   if (msg.stage === "following") {
-    progressFill.style.width = "40%";
+    progressFill.style.width = "28%";
   }
   if (msg.stage === "followers") {
-    progressFill.style.width = "75%";
+    progressFill.style.width = "48%";
   }
-  const text = formatProgress(msg);
-  progressText.textContent = text.replace(/<[^>]+>/g, "");
-  setStatus(text);
+  if (msg.stage === "enrich") {
+    const base = msg.target === "followers" ? 72 : 55;
+    const frac =
+      msg.total > 0 ? (msg.enriched || 0) / msg.total : 0;
+    progressFill.style.width = `${base + Math.round(frac * 12)}%`;
+  }
+  if (msg.stage === "liked" || msg.stage === "posts") {
+    if (msg.phase === "likers") {
+      progressFill.style.width = `${30 + Math.round((60 * (msg.postIndex || 0)) / Math.max(1, msg.postTotal || 1))}%`;
+      setProgressUi(
+        true,
+        t("progressLikers", {
+          i: msg.postIndex || 0,
+          n: msg.postTotal || 0,
+          fans: msg.fans || 0,
+        })
+      );
+      return;
+    }
+    progressFill.style.width = "35%";
+    setProgressUi(true, t("progressLiked", { loaded: msg.loaded ?? 0 }));
+    return;
+  }
+  setProgressUi(true, formatProgress(msg));
 }
 
 function onResult(msg, { keepTab = false } = {}) {
   startBtn.disabled = false;
-  show(progressWrap, false);
+  state.analysisRunning = false;
+  setProgressUi(false);
 
   if (!msg.ok) {
     setStatus(escapeHtml(msg.error || t("unknownError")), "error");
+    return;
+  }
+
+  // Skip stale Impersonator results from older versions
+  if (msg.impersonating) {
     return;
   }
 
@@ -698,44 +1163,71 @@ function onResult(msg, { keepTab = false } = {}) {
     state.counts.followers = state.followers.length || state.counts.followers;
   }
 
-  setHeaderAccount(msg.me);
+  refreshHeaderDisplay();
   updateBadgesAndStats();
 
   show(stats, true);
   show(tabs, true);
   show(searchRow, true);
   show(panels, true);
+  show(sectionNav, true);
   renderAll();
+  // Always refresh derived sections from the same global result
+  state.analyticsCache = null;
+  renderAnalytics();
+  renderBots();
   if (!keepTab) switchTab("mutual");
   else switchTab(state.activeTab || "mutual", { force: true });
+  switchSection(state.activeSection || "relationships");
 
-  setStatus(
+  const done =
     t("doneSummary", {
       notBack: msg.counts.notFollowingBack,
       notMe: msg.counts.notFollowedByMe,
       mutual: msg.counts.mutual,
-    }),
-    "ok"
-  );
+    }) +
+    " " +
+    t("doneGlobalHint");
+  setStatus(done, "ok");
 }
 
 /* ---------- settings ---------- */
 
+function isSettingsOpen() {
+  return settingsPanel && !settingsPanel.classList.contains("hidden");
+}
+
+function syncSettingsToggleUi(open) {
+  if (!settingsBtn) return;
+  settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  const label = open ? t("close") : t("settings");
+  settingsBtn.title = label;
+  settingsBtn.setAttribute("aria-label", label);
+  // Prefer live title over static data-i18n-title while open
+  if (open) {
+    settingsBtn.removeAttribute("data-i18n-title");
+  } else {
+    settingsBtn.setAttribute("data-i18n-title", "settings");
+  }
+}
+
 function openSettings() {
+  // Full-page settings under fixed header; gear becomes ×
+  if (appMain) show(appMain, false);
   show(settingsPanel, true);
-  settingsBtn?.setAttribute("aria-expanded", "true");
+  syncSettingsToggleUi(true);
 }
 
 function closeSettings() {
   show(settingsPanel, false);
-  settingsBtn?.setAttribute("aria-expanded", "false");
+  if (appMain) show(appMain, true);
+  syncSettingsToggleUi(false);
 }
 
 settingsBtn?.addEventListener("click", () => {
-  if (settingsPanel.classList.contains("hidden")) openSettings();
-  else closeSettings();
+  if (isSettingsOpen()) closeSettings();
+  else openSettings();
 });
-settingsClose?.addEventListener("click", closeSettings);
 
 document.querySelectorAll(".lang-btn").forEach((btn) => {
   btn.addEventListener("click", () => setLanguage(btn.dataset.lang));
@@ -749,21 +1241,41 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 async function init() {
-  const stored = await chrome.storage.local.get(["lang", "lastResult"]);
+  const stored = await chrome.storage.local.get([
+    "lang",
+    "lastResult",
+    "lastLiked",
+  ]);
+  // Drop leftover Impersonator keys from older builds
+  try {
+    await chrome.storage.local.remove([
+      "impersonating",
+      "impersonatorUsername",
+      "readOnly",
+    ]);
+  } catch {
+    /* ignore */
+  }
   if (stored.lang && I18N[stored.lang]) {
     state.lang = stored.lang;
   }
   applyStaticI18n();
+  show(sectionNav, true);
 
-  if (stored.lastResult?.ok) {
+  if (stored.lastResult?.ok && !stored.lastResult.impersonating) {
     onResult(stored.lastResult, { keepTab: true });
     if (stored.lastResult.finishedAt) {
       const agoMin = Math.round(
         (Date.now() - stored.lastResult.finishedAt) / 60000
       );
-      const ago =
-        agoMin > 0 ? t("lastResultAgo", { n: agoMin }) : "";
+      const ago = agoMin > 0 ? t("lastResultAgo", { n: agoMin }) : "";
       setStatus(t("lastResult", { ago }), "ok");
+    }
+  } else if (stored.lastResult?.impersonating) {
+    try {
+      await chrome.storage.local.remove(["lastResult"]);
+    } catch {
+      /* ignore */
     }
   }
 
@@ -778,34 +1290,57 @@ async function loadHeaderAccount() {
     const res = await chrome.tabs.sendMessage(tabId, { type: "GET_ME" });
     if (res?.ok && res.me) {
       state.me = { ...(state.me || {}), ...res.me };
-      setHeaderAccount(state.me);
+      refreshHeaderDisplay();
     }
   } catch {
     /* no IG tab */
   }
 }
 
-startBtn.addEventListener("click", async () => {
+async function runGlobalAnalysis() {
+  if (state.analysisRunning) {
+    setStatus(t("analysisRunning"), "error");
+    return;
+  }
+
+  // Second+ run in this popup session → tip / own-risk popover
+  if (state.analysisRuns >= 1) {
+    const ok = await askTipConfirm();
+    if (!ok) return;
+  }
+
+  state.analysisRunning = true;
   startBtn.disabled = true;
-  show(progressWrap, true);
   progressFill.style.width = "8%";
-  progressText.textContent = t("connecting");
-  setStatus(t("starting"));
+  setProgressUi(true, t("connecting"));
   closeSettings();
 
   try {
     const tab = await getIgTab();
-    await ensureContentScript(tab.id);
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content.js"],
+    });
     const res = await chrome.tabs.sendMessage(tab.id, { type: "ANALYZE" });
     if (!res?.started && res?.error) {
       throw new Error(res.error);
     }
-    progressText.textContent = t("loadingLists");
+    state.analysisRuns += 1;
+    setProgressUi(true, t("loadingLists"));
   } catch (err) {
+    state.analysisRunning = false;
     startBtn.disabled = false;
-    show(progressWrap, false);
+    setProgressUi(false);
     setStatus(err?.message || String(err), "error");
   }
+}
+
+startBtn.addEventListener("click", () => runGlobalAnalysis());
+
+tipModalContinue?.addEventListener("click", () => closeTipModal(true));
+tipModalCancel?.addEventListener("click", () => closeTipModal(false));
+tipModal?.addEventListener("click", (e) => {
+  if (e.target === tipModal) closeTipModal(false);
 });
 
 document.querySelectorAll("#tabs .tab").forEach((btn) => {
@@ -813,7 +1348,19 @@ document.querySelectorAll("#tabs .tab").forEach((btn) => {
 });
 
 document.querySelectorAll(".stat-btn").forEach((btn) => {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  btn.addEventListener("click", () => {
+    switchSection("relationships");
+    switchTab(btn.dataset.tab);
+  });
+});
+
+document.querySelectorAll(".section-btn").forEach((btn) => {
+  btn.addEventListener("click", () => switchSection(btn.dataset.section));
+});
+
+botSearchInput?.addEventListener("input", () => {
+  state.botQuery = botSearchInput.value;
+  renderBots();
 });
 
 searchInput.addEventListener("input", () => {

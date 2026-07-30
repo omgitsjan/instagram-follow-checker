@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Instagram Follow Checker",
-  "version": "1.0.0",
-  "description": "Mutual / not following back / you don't follow – your IG session only, no API.",
+  "version": "1.2.0",
+  "description": "Relationships, charts & bot signals – IG session only, no official API.",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
     "https://www.instagram.com/*",
