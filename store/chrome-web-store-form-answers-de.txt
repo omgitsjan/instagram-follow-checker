@@ -6,37 +6,37 @@ Texte unten sind bewusst kurz und copy-paste-fertig.
 
 1) Alleiniger Zweck – Beschreibung
 ----------------------------------
-Die Erweiterung hat genau einen Zweck: Instagram-Follow-Beziehungen des eingeloggten Nutzers im Browser anzeigen und auswerten. Sie vergleicht die Following- und Follower-Listen und zeigt drei Gruppen (gegenseitig, folgt nicht zurück, ich folge nicht) sowie die vollen Listen. Optional kann der Nutzer aus der Ansicht heraus folgen oder entfolgen. Es gibt keine anderen Funktionen (kein Feed, keine Werbung, kein Tracking).
+Die Erweiterung hat genau einen Zweck: Follow-Beziehungen des eingeloggten Nutzers auf instagram.com im Browser anzeigen und auswerten. Sie vergleicht die Following- und Follower-Listen und zeigt drei Gruppen (gegenseitig, folgt nicht zurück, ich folge nicht) sowie die vollen Listen. Optional kann der Nutzer aus der Ansicht heraus folgen oder entfolgen. Inoffiziell; nicht mit Meta verbunden. Es gibt keine anderen Funktionen (kein Feed, keine Werbung, kein Tracking).
 
-(Zeichen ca.: 480)
+(Zeichen ca.: 470)
 
 
 2) Begründung für activeTab
 ---------------------------
-activeTab wird benötigt, damit die Erweiterung mit dem aktiven Instagram-Tab kommunizieren kann, wenn der Nutzer die Analyse startet oder Follow/Unfollow ausführt. So wird der Content-Script-Kontext der geöffneten Instagram-Seite angesprochen, ohne dauerhaft unnötig andere Websites zu steuern. Ohne diese Interaktion mit dem aktuellen Tab kann die Erweiterung die Listen nicht im Kontext der bestehenden Login-Session laden.
+activeTab wird benötigt, damit die Erweiterung mit dem aktiven instagram.com-Tab kommunizieren kann, wenn der Nutzer die Analyse startet oder Follow/Unfollow ausführt. So wird der Content-Script-Kontext der geöffneten Website-Seite angesprochen, ohne dauerhaft unnötig andere Websites zu steuern. Ohne diese Interaktion mit dem aktuellen Tab kann die Erweiterung die Listen nicht im Kontext der bestehenden Login-Session laden.
 
-(Zeichen ca.: 430)
+(Zeichen ca.: 427)
 
 
 3) Begründung für scripting
 ---------------------------
 scripting wird benötigt, um das Content Script auf instagram.com bei Bedarf zu injizieren bzw. sicherzustellen, dass es geladen ist (z. B. wenn die Seite schon offen war, bevor die Erweiterung installiert wurde). Das Script liest die Follow-Beziehungen über die Web-Session und führt nur die vom Nutzer ausgelösten Follow-/Unfollow-Aktionen aus. Es wird nicht für fremde Websites oder Hintergrund-Tracking verwendet.
 
-(Zeichen ca.: 420)
+(Zeichen ca.: 416)
 
 
 4) Begründung für storage
 -------------------------
 storage (chrome.storage.local) speichert ausschließlich lokale Einstellungen und Cache auf dem Gerät des Nutzers: die gewählte UI-Sprache (EN/DE) und optional das letzte Analyseergebnis, damit es nach dem Schließen des Popups wieder angezeigt werden kann. Es werden keine Daten an Server des Entwicklers übertragen. Ohne storage müssten Sprache und Ergebnis bei jedem Öffnen neu gesetzt bzw. neu geladen werden.
 
-(Zeichen ca.: 410)
+(Zeichen ca.: 411)
 
 
 5) Begründung für Hostberechtigung
 ----------------------------------
-Die Host-Berechtigungen für https://www.instagram.com/* (und zugehörige Bild-CDNs) sind erforderlich, weil die Erweiterung nur dort die Following-/Follower-Listen im Kontext der bereits eingeloggten Web-Session laden und Profilbilder anzeigen kann. Content Scripts und Requests laufen ausschließlich für diesen Instagram-Zweck. Es wird kein allgemeiner Zugriff auf beliebige Websites angefordert. Ohne Host-Zugriff auf Instagram ist der alleinige Zweck nicht erfüllbar.
+Die Host-Berechtigungen für https://www.instagram.com/* (und zugehörige Bild-CDNs) sind erforderlich, weil die Erweiterung nur dort die Following-/Follower-Listen im Kontext der bereits eingeloggten Web-Session laden und Profilbilder anzeigen kann. Content Scripts und Requests laufen ausschließlich für diesen Website-Zweck. Es wird kein allgemeiner Zugriff auf beliebige Websites angefordert. Ohne Host-Zugriff auf instagram.com ist der alleinige Zweck nicht erfüllbar.
 
-(Zeichen ca.: 470)
+(Zeichen ca.: 471)
 
 
 6) Remote Code?
@@ -64,7 +64,7 @@ Ankreuzen (empfohlen, ehrlich für diese Extension):
 [x] Websitecontent                           → JA
 
 Begründung Websitecontent (für dich / falls nachgefragt):
-Die Erweiterung verarbeitet Inhalte der Instagram-Website bzw. der Instagram-Web-API im Browser (Benutzernamen, Anzeigenamen, Profilbild-URLs, Follow-Beziehungen), um die Listen anzuzeigen. Verarbeitung und optionale lokale Speicherung erfolgen nur auf dem Gerät; keine Übermittlung an Server des Entwicklers.
+Die Erweiterung verarbeitet Inhalte der Instagram-Website bzw. der zugehörigen Web-API im Browser (Benutzernamen, Anzeigenamen, Profilbild-URLs, Follow-Beziehungen), um die Listen anzuzeigen. Verarbeitung und optionale lokale Speicherung erfolgen nur auf dem Gerät; keine Übermittlung an Server des Entwicklers.
 
 
 8) Bestätigungen
@@ -88,8 +88,9 @@ Empfehlung für den Store: die blob-URL (GitHub-Ansicht) ist lesbar und üblich 
 
 10) Kurz-Check vor Submit
 -------------------------
-- Manifest-Permissions = activeTab, scripting, storage + Instagram-Hosts only
+- Manifest-Permissions = activeTab, scripting, storage + instagram.com-Hosts only
 - Remote Code = Nein
 - Privacy URL erreichbar (nach Push)
 - Beschreibung / Screenshots stimmen mit alleinigem Zweck überein
-- Keine irreführenden Claims (nicht „offiziell von Instagram/Meta“)
+- Keine irreführenden Claims (nicht „offiziell von Meta“)
+- Store-Name: Follow Checker (kein Instagram/Meta/Facebook/IG im Produktnamen)

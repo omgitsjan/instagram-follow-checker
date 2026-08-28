@@ -1,13 +1,15 @@
-Instagram Follow Checker – Beziehungen, Charts & Bots
+Follow Checker – Beziehungen, Charts & Bots
 
-Finde gegenseitige Follower, Accounts die dir nicht zurückfolgen und Follower, denen du noch nicht folgst — plus lokale Analytics-Charts und Bot-Heuristiken. Kostenlos, Open Source, mit deiner normalen Instagram-Anmeldung in Chrome. Keine offizielle Instagram-API. Keine Paywall. Keine Analyse-Daten auf unseren Servern.
+Finde gegenseitige Follower, Accounts die dir nicht zurückfolgen und Follower, denen du noch nicht folgst — plus lokale Analytics-Charts und Bot-Heuristiken. Kostenlos, Open Source, nur mit deiner Browser-Session in Chrome. Keine offizielle API. Keine Paywall. Keine Analyse-Daten auf unseren Servern.
+
+Inoffizielles, unabhängiges Tool. Nicht verbunden mit, freigegeben oder gesponsert von Meta oder verbundenen Unternehmen. Funktioniert auf der Instagram-Website, während du eingeloggt bist.
 
 
 ═══════════════════════════════════════
 WAS MACHT DIE EXTENSION?
 ═══════════════════════════════════════
 
-Instagram Follow Checker vergleicht deine Following-Liste mit deinen Followern und sortiert sie in klare Beziehungs-Ansichten:
+Follow Checker vergleicht deine Following-Liste mit deinen Followern und sortiert sie in klare Beziehungs-Ansichten:
 
 • Gegenseitig – du folgst ihnen und sie folgen dir
 • Folgt nicht zurück – du folgst ihnen, sie dir nicht
@@ -20,7 +22,7 @@ In den Listen kannst du:
 • nach Username suchen
 • Ergebnisse als JSON exportieren
 
-v1.2 zusätzlich:
+Außerdem:
 • Analytics – Donut-/Pie-Charts aus deinen Listen-Buckets
 • Bots – lokale Heuristiken mit optionalen Aktionen
 • Posts / Admire – als coming soon markiert
@@ -32,9 +34,9 @@ Profilbilder werden angezeigt, sofern verfügbar. Die letzte Analyse kann beim e
 SO FUNKTIONIERT’S (OHNE OFFIZIELLE API)
 ═══════════════════════════════════════
 
-Die Extension nutzt nicht die offizielle Instagram Graph API und braucht keine Meta-Developer-Apps oder Tokens.
+Die Extension nutzt nicht die offizielle Graph API und braucht keine Meta-Developer-Apps oder Tokens.
 
-Solange du in Chrome auf instagram.com eingeloggt bist, verwendet sie dieselbe Art von Browser-Session-Anfragen wie die Instagram-Website, um Follower-/Following-Listen zu laden. Vergleich und Anzeige passieren lokal in deinem Browser.
+Solange du in Chrome auf instagram.com eingeloggt bist, verwendet sie dieselbe Art von Browser-Session-Anfragen wie die Website, um Follower-/Following-Listen zu laden. Vergleich und Anzeige passieren lokal in deinem Browser.
 
 • Kein Passwort wird von dieser Extension abgefragt
 • Keine Analyse-Daten gehen an Server des Entwicklers
@@ -47,12 +49,12 @@ SO NUTZT DU SIE
 
 1. Extension aus dem Chrome Web Store installieren
 2. https://www.instagram.com öffnen und einloggen
-3. Icon von Instagram Follow Checker anklicken
-4. „Analyse starten“ / „Start analysis“ und warten, bis beide Listen geladen sind
+3. Icon von Follow Checker anklicken
+4. „Analyse starten“ / “Start analysis” und warten, bis beide Listen geladen sind
 5. Tabs durchstöbern, suchen, exportieren oder folgen/entfolgen
 
 Tipps:
-• Instagram-Tab während der Analyse offen lassen
+• instagram.com-Tab während der Analyse offen lassen
 • Große Accounts dauern länger (Pausen zwischen Seiten gegen Rate-Limits)
 • Bei Fehlern oder 429: ein paar Minuten warten und erneut versuchen
 • Unter Einstellungen (Zahnrad): Sprache EN/DE, Open-Source-Link, Trinkgeld
@@ -82,9 +84,9 @@ DATENSCHUTZ
 Berechtigungen nur so weit nötig:
 • Zugriff auf instagram.com (und Bild-CDNs) für Listen und Avatare bei bestehendem Login
 • Storage für Sprache und letztes lokales Analyse-Ergebnis
-• Active Tab / Scripting zur Kommunikation mit dem Instagram-Tab
+• Active Tab / Scripting zur Kommunikation mit dem Website-Tab
 
-Es gibt kein Backend, das deine Follower-Listen empfängt. Die Nutzung von Instagram unterliegt weiter den Regeln von Meta/Instagram.
+Es gibt kein Backend, das deine Follower-Listen empfängt. Die Nutzung der Instagram-Website unterliegt weiter den Regeln von Meta.
 
 
 ═══════════════════════════════════════
@@ -93,14 +95,14 @@ WICHTIG – NUTZUNGSBEDINGUNGEN, RISIKO & HAFTUNGSAUSSCHLUSS
 
 Dies ist ein unabhängiges, inoffizielles Tool. Es ist NICHT mit Meta, Instagram oder verbundenen Unternehmen verbunden, freigegeben oder gesponsert.
 
-Automatisierungsähnlicher oder nicht-offizieller Zugriff kann gegen die Nutzungsbedingungen von Instagram/Meta verstoßen. Mögliche Folgen: temporäre Action-Blocks, Einschränkungen oder Account-Maßnahmen – abhängig von Instagram und deiner Nutzung.
+Automatisierungsähnlicher oder nicht-offizieller Zugriff kann gegen die Nutzungsbedingungen von Meta verstoßen. Mögliche Folgen: temporäre Action-Blocks, Einschränkungen oder Account-Maßnahmen – abhängig von der Website und deiner Nutzung.
 
 Mit der Nutzung erklärst du dich einverstanden, dass:
 • du die Extension auf eigenes Risiko nutzt
-• sie „wie besehen“ / „as is“ ohne Gewährleistung bereitgestellt wird
+• sie „wie besehen“ / “as is” ohne Gewährleistung bereitgestellt wird
 • die Autoren nicht für Sperren, verlorene Follower, Datenverlust oder Schäden haften
 • du sie nicht für Spam, Belästigung, Massenmissbrauch oder illegale Zwecke einsetzt
-• du selbst für die Einhaltung der Instagram-/Meta-Regeln und geltenden Rechts verantwortlich bist
+• du selbst für die Einhaltung der Website-/Meta-Regeln und geltenden Rechts verantwortlich bist
 
 Empfehlung: nicht massenhaft folgen/entfolgen in kurzer Zeit. Nur mit einem Account nutzen, den du dir „leisten“ kannst zu riskieren.
 
@@ -132,4 +134,4 @@ SPRACHEN
 KURZ
 ═══════════════════════════════════════
 
-Instagram Follow Checker zeigt dir in Chrome deine Follow-Beziehungen: gegenseitig, nicht zurück und wen du noch nicht folgst – plus Charts und Bot-Heuristiken. Lokal, Open Source, kostenlos. Verantwortlich und auf eigenes Risiko nutzen.
+Follow Checker zeigt dir in Chrome deine Follow-Beziehungen: gegenseitig, nicht zurück und wen du noch nicht folgst – plus Charts und Bot-Heuristiken. Lokal, Open Source, kostenlos. Inoffiziell. Verantwortlich und auf eigenes Risiko nutzen.
