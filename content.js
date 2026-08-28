@@ -47,7 +47,7 @@ async function igFetch(url, options = {}) {
   }
   if (res.status === 429) {
     throw new Error(
-      "Instagram rate-limited requests (429). Wait 1–2 minutes and try again."
+      "The website rate-limited requests (429). Wait 1–2 minutes and try again."
     );
   }
   if (!res.ok) {
@@ -59,20 +59,20 @@ async function igFetch(url, options = {}) {
     }
     throw new Error(
       detail
-        ? `Instagram HTTP ${res.status}: ${detail}`
-        : `Instagram responded with HTTP ${res.status}`
+        ? `HTTP ${res.status}: ${detail}`
+        : `The website responded with HTTP ${res.status}`
     );
   }
   const ct = res.headers.get("content-type") || "";
   if (ct.includes("application/json")) {
     return res.json();
   }
-  // Some IG endpoints return JSON without content-type
+  // Some endpoints return JSON without content-type
   const text = await res.text();
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error("Instagram returned non-JSON response.");
+    throw new Error("The website returned a non-JSON response.");
   }
 }
 
@@ -98,7 +98,7 @@ async function friendshipAction(userId, action) {
       body: "",
     });
   } catch (err) {
-    // Fallback path used by some IG web builds
+    // Fallback path used by some website builds
     if (action === "remove_follower") {
       data = await igFetch(
         `https://www.instagram.com/api/v1/friendships/remove_follower/${userId}/`,
@@ -227,7 +227,7 @@ async function getCurrentUser() {
   }
 
   throw new Error(
-    "Could not detect your account. Open instagram.com, log in, and stay on an Instagram page."
+    "Could not detect your account. Open instagram.com, log in, and stay on that page."
   );
 }
 
@@ -421,7 +421,7 @@ async function fetchOwnPosts(userId, onProgress, { maxPages = 8 } = {}) {
   }
 
   if (!userId && !me?.username) {
-    throw new Error("Could not resolve your account for posts. Stay logged in on Instagram.");
+    throw new Error("Could not resolve your account for posts. Stay logged in on instagram.com.");
   }
 
   const results = [];
@@ -503,7 +503,7 @@ async function fetchOwnPosts(userId, onProgress, { maxPages = 8 } = {}) {
 
   if (!results.length) {
     throw new Error(
-      `Could not load your posts. ${errors.join(" · ") || "Unknown error"}. Open your profile on Instagram and try again.`
+      `Could not load your posts. ${errors.join(" · ") || "Unknown error"}. Open your profile on instagram.com and try again.`
     );
   }
 

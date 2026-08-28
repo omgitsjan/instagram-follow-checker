@@ -69,6 +69,7 @@ function t(key, vars = {}) {
 
 function applyStaticI18n() {
   document.documentElement.lang = state.lang === "de" ? "de" : "en";
+  document.title = t("appTitle");
 
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
@@ -450,7 +451,7 @@ async function setLanguage(lang) {
 function setHeaderLogoFallback() {
   if (!headerLogo) return;
   headerLogo.classList.remove("has-photo");
-  headerLogo.innerHTML = '<span class="logo-fallback">IG</span>';
+  headerLogo.innerHTML = '<span class="logo-fallback">FC</span>';
 }
 
 function setHeaderPhoto(person) {
@@ -1293,7 +1294,7 @@ async function loadHeaderAccount() {
       refreshHeaderDisplay();
     }
   } catch {
-    /* no IG tab */
+    /* no website tab */
   }
 }
 
@@ -1387,7 +1388,7 @@ exportBtn.addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `instagram-follow-check-${state.me?.username || "export"}.json`;
+  a.download = `follow-check-${state.me?.username || "export"}.json`;
   a.click();
   URL.revokeObjectURL(url);
 });

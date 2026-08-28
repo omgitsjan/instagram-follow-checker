@@ -24,7 +24,7 @@ const I18N = {
     tipModalBody:
       "You’re running this again on your own responsibility. If the tool helps you, a small tip is appreciated ♥",
     tipModalContinue: "Continue anyway",
-    postsReloadHint: "Reload the Instagram tab, then try again.",
+    postsReloadHint: "Reload the instagram.com tab, then try again.",
     statusIdle:
       "Open <strong>instagram.com</strong> (logged in) and start the analysis.",
     following: "Following",
@@ -39,7 +39,7 @@ const I18N = {
     export: "Export",
     exportTitle: "Export as JSON",
     footer:
-      "Profile pics & follow/unfollow use your IG session. No external servers. Private accounts → “Requested” instead of instant follow.",
+      "Unofficial. Profile pics & follow/unfollow use your browser session. No external servers. Private accounts → “Requested” instead of instant follow.",
     private: "private",
     unfollow: "Unfollow",
     follow: "Follow",
@@ -47,7 +47,7 @@ const I18N = {
     openProfile: "Open profile: @{user}",
     unfollowUser: "Unfollow @{user}",
     followUser: "Follow @{user}",
-    noIgTab: "No Instagram tab open. Keep instagram.com open.",
+    noIgTab: "No instagram.com tab open. Keep that tab open.",
     actionFailed: "Action failed",
     followRequestSent: "Follow request sent to <strong>@{user}</strong>.",
     unfollowed: "Unfollowed <strong>@{user}</strong>.",
@@ -64,7 +64,7 @@ const I18N = {
       "Last result loaded{ago}. Start again to refresh.",
     lastResultAgo: " ({n} min ago)",
     starting: "Starting analysis…",
-    connecting: "Connecting to Instagram tab…",
+    connecting: "Connecting to the website tab…",
     loadingLists: "Loading lists (may take a while for large accounts)…",
     progressAccount: "Account: @{user}",
     progressFollowing: "Following loaded: {loaded}{total}",
@@ -88,14 +88,14 @@ const I18N = {
     postsSoon3: "When counts are equal, newer interactions win",
     admireComingTitle: "Admirers & silent viewers",
     admireComingBody:
-      "See who watches and engages with you — including people who don’t follow you — when Instagram exposes that data to the web session.",
+      "See who watches and engages with you — including people who don’t follow you — when the website exposes that data to the web session.",
     admireSoon1: "Current story viewers (who watched your active stories)",
     admireSoon2: "Highlight viewers (who watched story highlights)",
     admireSoon3:
       "Viewers/likers who don’t follow you (session-only, no Graph API keys)",
     admireSoon4: "Repeat viewers ranked above one-time visitors",
     analyticsHint:
-      "Charts from your last analysis lists only — no extra Instagram profile lookups.",
+      "Charts from your last analysis lists only — no extra profile lookups.",
     chartFollowingTitle: "Your following",
     chartFollowersTitle: "Your followers",
     chartNetworkTitle: "Relationship mix",
@@ -160,7 +160,7 @@ const I18N = {
     tipModalBody:
       "Du startest das erneut auf eigene Verantwortung. Wenn dir das Tool hilft, freue ich mich über ein kleines Trinkgeld ♥",
     tipModalContinue: "Trotzdem fortfahren",
-    postsReloadHint: "Instagram-Tab neu laden und erneut versuchen.",
+    postsReloadHint: "instagram.com-Tab neu laden und erneut versuchen.",
     statusIdle:
       "Öffne <strong>instagram.com</strong> (eingeloggt) und starte die Analyse.",
     following: "Following",
@@ -175,7 +175,7 @@ const I18N = {
     export: "Export",
     exportTitle: "Als JSON exportieren",
     footer:
-      "Profilbilder & Follow/Entfolgen über deine IG-Session. Keine externen Server. Privat-Accounts → „Angefragt“ statt sofort Follow.",
+      "Inoffiziell. Profilbilder & Follow/Entfolgen über deine Browser-Session. Keine externen Server. Privat-Accounts → „Angefragt“ statt sofort Follow.",
     private: "privat",
     unfollow: "Entfolgen",
     follow: "Folgen",
@@ -183,7 +183,7 @@ const I18N = {
     openProfile: "Profil öffnen: @{user}",
     unfollowUser: "@{user} entfolgen",
     followUser: "@{user} folgen",
-    noIgTab: "Kein Instagram-Tab offen. Bitte instagram.com aktiv lassen.",
+    noIgTab: "Kein instagram.com-Tab offen. Bitte den Tab aktiv lassen.",
     actionFailed: "Aktion fehlgeschlagen",
     followRequestSent:
       "Follow-Anfrage an <strong>@{user}</strong> gesendet.",
@@ -201,7 +201,7 @@ const I18N = {
       "Letztes Ergebnis geladen{ago}. Neu starten für Update.",
     lastResultAgo: " (vor {n} Min.)",
     starting: "Starte Analyse…",
-    connecting: "Verbinde mit Instagram-Tab…",
+    connecting: "Verbinde mit dem Website-Tab…",
     loadingLists:
       "Listen werden geladen (kann bei vielen Accounts dauern)…",
     progressAccount: "Account: @{user}",
@@ -226,7 +226,7 @@ const I18N = {
     postsSoon3: "Bei Gleichstand gewinnen neuere Interaktionen",
     admireComingTitle: "Bewunderer & stille Viewer",
     admireComingBody:
-      "Wer dich anschaut und mit dir interagiert — auch ohne zu folgen — sobald Instagram das der Web-Session zeigt.",
+      "Wer dich anschaut und mit dir interagiert — auch ohne zu folgen — sobald die Website das der Web-Session zeigt.",
     admireSoon1: "Aktuelle Story-Viewer (wer deine aktiven Stories gesehen hat)",
     admireSoon2: "Highlight-Viewer (wer Story-Highlights gesehen hat)",
     admireSoon3:

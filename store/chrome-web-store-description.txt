@@ -1,13 +1,15 @@
-Instagram Follow Checker – relationships, charts & bots
+Follow Checker – relationships, charts & bots
 
-Find mutual follows, people who don’t follow you back, and followers you don’t follow yet — plus local analytics charts and bot-style heuristics. Free, open source, and works with your normal Instagram login in Chrome. No Instagram API keys. No paid unlock. No data sent to our servers.
+Find mutual follows, people who don’t follow you back, and followers you don’t follow yet — plus local analytics charts and bot-style heuristics. Free, open source, session-only in Chrome. No official API keys. No paid unlock. No data sent to our servers.
+
+Unofficial independent tool. Not affiliated with, endorsed by, or sponsored by Meta or related companies. Works on the Instagram website while you are logged in.
 
 
 ═══════════════════════════════════════
 WHAT IT DOES
 ═══════════════════════════════════════
 
-Instagram Follow Checker compares your Following list with your Followers list and organizes people into clear relationship views:
+Follow Checker compares your Following list with your Followers list and organizes people into clear relationship views:
 
 • Mutual – you follow them and they follow you
 • Not following back – you follow them, they don’t follow you
@@ -20,7 +22,7 @@ From the lists you can:
 • Search by username
 • Export results as JSON for your own records
 
-v1.2 also adds:
+Also includes:
 • Analytics – doughnut/pie charts from your list buckets (mutual / not back / not you)
 • Bots – local heuristic signals with optional actions
 • Posts / Admire – marked coming soon
@@ -32,9 +34,9 @@ Profile pictures are shown when available. Your last analysis can be restored wh
 HOW IT WORKS (NO OFFICIAL API)
 ═══════════════════════════════════════
 
-This extension does not use Instagram’s official Graph API and does not require Meta developer apps or tokens.
+This extension does not use an official Graph API and does not require Meta developer apps or tokens.
 
-While you are logged into instagram.com in Chrome, it uses the same kind of browser session requests the Instagram website already makes to load follower/following lists. Comparison and display happen locally in your browser.
+While you are logged into instagram.com in Chrome, it uses the same kind of browser session requests the website already makes to load follower/following lists. Comparison and display happen locally in your browser.
 
 • No account password is collected by this extension
 • No analysis data is uploaded to the developer’s servers
@@ -47,14 +49,14 @@ HOW TO USE
 
 1. Install the extension from the Chrome Web Store
 2. Open https://www.instagram.com and log in
-3. Click the Instagram Follow Checker icon
+3. Click the Follow Checker icon
 4. Press “Start analysis” and wait for both lists to load
 5. Browse the three tabs, search, export, or follow/unfollow as needed
 
 Tips:
-• Keep the Instagram tab open while analyzing
+• Keep the instagram.com tab open while analyzing
 • Large accounts take longer (the extension pages results with short pauses to reduce rate limits)
-• If Instagram returns an error or rate limit (e.g. 429), wait a few minutes and try again
+• If the website returns an error or rate limit (e.g. 429), wait a few minutes and try again
 • Use Settings (gear icon) to switch language English/Deutsch, open the source code, or tip the developer
 
 
@@ -82,9 +84,9 @@ PRIVACY
 Permissions are limited to what the extension needs:
 • Access to instagram.com (and related image CDNs) so it can read list data and show avatars while you are logged in
 • Storage for language preference and the last local analysis result
-• Active tab / scripting so the extension can talk to the open Instagram tab
+• Active tab / scripting so the extension can talk to the open website tab
 
-We do not run a backend that receives your follower lists. Use of Instagram remains between you and Meta/Instagram under their policies.
+We do not run a backend that receives your follower lists. Use of the Instagram website remains between you and Meta under their policies.
 
 
 ═══════════════════════════════════════
@@ -93,14 +95,14 @@ IMPORTANT – TERMS, RISK & DISCLAIMER
 
 This is an independent, unofficial tool. It is NOT affiliated with, endorsed by, or sponsored by Meta, Instagram, or any related company.
 
-Using automation-like or non-official access patterns may conflict with Instagram/Meta Terms of Use or related policies. Possible consequences include temporary action blocks, feature limits, or account restrictions—depending on Instagram’s systems and how you use the tool.
+Using automation-like or non-official access patterns may conflict with Meta Terms of Use or related policies. Possible consequences include temporary action blocks, feature limits, or account restrictions—depending on the website’s systems and how you use the tool.
 
 By using this extension you agree that:
 • You use it at your own risk
 • The authors provide it “as is” without warranty of any kind
 • The authors are not liable for account bans, lost followers, data loss, or any damages
 • You will not use it for spam, harassment, bulk abuse, or any illegal purpose
-• You are responsible for complying with Instagram/Meta rules and applicable law
+• You are responsible for complying with the website’s rules, Meta policies, and applicable law
 
 Recommended: do not mass-follow or mass-unfollow large numbers of accounts in a short time. Prefer careful, limited use on an account you can afford to risk.
 
@@ -132,4 +134,4 @@ LANGUAGES
 SHORT SUMMARY
 ═══════════════════════════════════════
 
-Instagram Follow Checker helps you understand your follow relationships in Chrome: who is mutual, who doesn’t follow back, and who you don’t follow yet—plus charts and bot heuristics. Local, open source, free. Use responsibly and at your own risk.
+Follow Checker helps you understand your follow relationships in Chrome: who is mutual, who doesn’t follow back, and who you don’t follow yet—plus charts and bot heuristics. Local, open source, free. Unofficial. Use responsibly and at your own risk.

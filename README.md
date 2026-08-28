@@ -1,9 +1,11 @@
-# Instagram Follow Checker
+# Follow Checker
 
 [![CI](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/omgitsjan/instagram-follow-checker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-Chrome extension (**Manifest V3**, **v1.2**) for Instagram follow relationships, local analytics, and bot heuristics — all via **your existing browser session**. No official API, no paywall, no backend.
+Chrome extension (**Manifest V3**, **v1.3**) for follow relationships, local analytics, and bot heuristics on the Instagram website — all via **your existing browser session**. No official API, no paywall, no backend.
+
+**Unofficial.** Not affiliated with, endorsed by, or sponsored by Meta or related companies.
 
 | Section | What you get |
 |---------|----------------|
@@ -13,7 +15,7 @@ Chrome extension (**Manifest V3**, **v1.2**) for Instagram follow relationships,
 | **Posts** / **Admire** | Roadmap / coming soon |
 | **Settings** | Language EN/DE, open source, tip |
 
-> **Vibe-coded.** Built exploratively with AI — not production/enterprise software. Expect rough edges, Instagram breaking changes, and no support guarantee.
+> **Vibe-coded.** Built exploratively with AI — not production/enterprise software. Expect rough edges, website breaking changes, and no support guarantee.
 
 **UI language:** English by default. **German** is supported via full-page **Settings**.
 
@@ -29,17 +31,17 @@ Chrome extension (**Manifest V3**, **v1.2**) for Instagram follow relationships,
 - Authors and contributors are **not liable** for account restrictions, bans, lost followers, data loss, or any damages.
 - Use **at your own risk**.
 
-### Instagram Terms of Service / automation
+### Website terms / automation
 
-This tool does **not** use the official Instagram Graph API. It loads data through the same kind of web session / internal web endpoints the Instagram website uses (cookies in your browser).
+This tool does **not** use an official Graph API. It loads data through the same kind of web session / internal web endpoints the Instagram website uses (cookies in your browser).
 
-That may conflict with **Instagram / Meta Terms of Use**, especially where they prohibit:
+That may conflict with **Meta Terms of Use**, especially where they prohibit:
 
 - automated access, scraping, or unofficial clients  
 - bulk follow / unfollow  
 - bot-like behaviour  
 
-**Possible outcomes** (depending on usage and Instagram’s systems):
+**Possible outcomes** (depending on usage and the website’s systems):
 
 - temporary action blocks  
 - limited features  
@@ -52,13 +54,13 @@ That may conflict with **Instagram / Meta Terms of Use**, especially where they 
 - pause if you hit rate limits (e.g. HTTP 429)  
 - do not use this for spam, harassment, or commercial bulk abuse  
 
-This repo is **not** advice to circumvent ToS. You are responsible for complying with Instagram/Meta rules and applicable law.
+This repo is **not** advice to circumvent ToS. You are responsible for complying with Meta rules, the website’s terms, and applicable law.
 
 ### Not affiliated
 
 - **Not** affiliated with Meta, Instagram, or related companies  
 - Unofficial tool  
-- Internal Instagram endpoints can break at any time  
+- Internal website endpoints can break at any time  
 
 ---
 
@@ -67,7 +69,7 @@ This repo is **not** advice to circumvent ToS. You are responsible for complying
 - **Relationships:** full Following / Followers lists; mutual / not back / you don’t follow  
 - **Analytics:** pie/doughnut charts from list buckets  
 - **Bots:** local heuristics with unfollow / remove-follower style actions where available  
-- Profile pictures (with fallback via the Instagram tab)  
+- Profile pictures (with fallback via the open website tab)  
 - **Unfollow** / **Follow** from relationship lists  
 - Search and JSON export  
 - Last result cached locally in the browser  
@@ -92,7 +94,7 @@ Relationship data is processed **locally in your browser**. Analysis results are
 ### Option A – Release ZIP (recommended)
 
 1. Download the latest **[Release](https://github.com/omgitsjan/instagram-follow-checker/releases)**  
-   (e.g. [`instagram-follow-checker-v1.2.0.zip`](https://github.com/omgitsjan/instagram-follow-checker/releases/download/v1.2.0/instagram-follow-checker-v1.2.0.zip))  
+   (e.g. [`instagram-follow-checker-v1.3.0.zip`](https://github.com/omgitsjan/instagram-follow-checker/releases/download/v1.3.0/instagram-follow-checker-v1.3.0.zip))  
 2. Unzip  
 3. Chrome → `chrome://extensions` → **Developer mode** → **Load unpacked**  
 4. Select the **unzipped folder**  
@@ -103,7 +105,7 @@ Relationship data is processed **locally in your browser**. Analysis results are
 1. Clone the repository  
 2. Load the project folder as an unpacked extension (steps 3–5 above)  
 
-After code updates: click **Reload** on the extensions page and refresh the Instagram tab.
+After code updates: click **Reload** on the extensions page and refresh the instagram.com tab.
 
 **Tip:** Package with valid timestamps (avoids “Updated 1 Jan 1970” in the store):
 
@@ -115,7 +117,7 @@ node scripts/package-zip.mjs
 
 ## Usage
 
-1. Stay logged in on Instagram (tab open).  
+1. Stay logged in on instagram.com (tab open).  
 2. Start analysis and wait (large accounts take longer; requests are paced).  
 3. Use **Relationships** for tiles/tabs; **Analytics** for charts; **Bots** for heuristic flags.  
 4. Optionally follow/unfollow; use search or export.  
@@ -128,7 +130,7 @@ node scripts/package-zip.mjs
 
 | File | Role |
 |------|------|
-| `manifest.json` | MV3, Instagram + CDN host permissions |
+| `manifest.json` | MV3, instagram.com + CDN host permissions |
 | `content.js` | Runs on `instagram.com`, lists, follow/unfollow |
 | `popup.*` | UI: sections, tiles, charts, bots, settings |
 | `analytics.js` | Doughnut/pie charts from list buckets |
@@ -143,7 +145,7 @@ Data stays in the browser (`chrome.storage.local` for language + last result).
 
 ## Limitations
 
-- Instagram API/DOM changes can break the extension overnight  
+- Website API/DOM changes can break the extension overnight  
 - Rate limits / action blocks are possible  
 - Very large accounts mean long runtimes  
 - No multi-account manager, no background auto-unfollow bot  
@@ -157,7 +159,7 @@ Lightweight pipeline (no app bundler, no Web Store deploy in CI):
 | Workflow | When | What |
 |----------|------|------|
 | **CI** (`ci.yml`) | Push/PR on `main` | Validate structure, JS syntax, ZIP artifact |
-| **Release** (`release.yml`) | Tag `v*` (e.g. `v1.2.0`) | Validate, tag = manifest version, GitHub Release + ZIP |
+| **Release** (`release.yml`) | Tag `v*` (e.g. `v1.3.0`) | Validate, tag = manifest version, GitHub Release + ZIP |
 
 Local checks:
 
@@ -172,15 +174,15 @@ node --check i18n.js
 Release example (bump `manifest.json` version first):
 
 ```bash
-git tag v1.2.0
-git push origin v1.2.0
+git tag v1.3.0
+git push origin v1.3.0
 ```
 
 ---
 
 ## License
 
-[MIT](./LICENSE) — plus the **disclaimers** above: use at your own risk; **no liability**, especially for Instagram/Meta account actions.
+[MIT](./LICENSE) — plus the **disclaimers** above: use at your own risk; **no liability**, especially for account actions on third-party websites.
 
 ---
 
