@@ -50,7 +50,7 @@ SO NUTZT DU SIE
 1. Extension aus dem Chrome Web Store installieren
 2. https://www.instagram.com öffnen und einloggen
 3. Icon von Follow Checker anklicken
-4. „Analyse starten“ / “Start analysis” und warten, bis beide Listen geladen sind
+4. „Analyse starten“ / „Start analysis“ und warten, bis beide Listen geladen sind
 5. Tabs durchstöbern, suchen, exportieren oder folgen/entfolgen
 
 Tipps:
@@ -99,7 +99,7 @@ Automatisierungsähnlicher oder nicht-offizieller Zugriff kann gegen die Nutzung
 
 Mit der Nutzung erklärst du dich einverstanden, dass:
 • du die Extension auf eigenes Risiko nutzt
-• sie „wie besehen“ / “as is” ohne Gewährleistung bereitgestellt wird
+• sie „wie besehen“ / „as is“ ohne Gewährleistung bereitgestellt wird
 • die Autoren nicht für Sperren, verlorene Follower, Datenverlust oder Schäden haften
 • du sie nicht für Spam, Belästigung, Massenmissbrauch oder illegale Zwecke einsetzt
 • du selbst für die Einhaltung der Website-/Meta-Regeln und geltenden Rechts verantwortlich bist
