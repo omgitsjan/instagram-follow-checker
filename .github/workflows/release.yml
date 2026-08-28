@@ -63,9 +63,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Instagram Follow Checker v${{ env.VERSION }}
+          name: Follow Checker v${{ env.VERSION }}
           body: |
-            ## Instagram Follow Checker v${{ env.VERSION }}
+            ## Follow Checker v${{ env.VERSION }}
 
             Unpacked Chrome extension ZIP (Relationships, Analytics, Bots, Liked).
 

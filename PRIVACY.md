@@ -1,18 +1,20 @@
-# Privacy Policy – Instagram Follow Checker
+# Privacy Policy – Follow Checker
 
-**Last updated:** 2026-07-29  
+**Last updated:** 2026-08-28  
 **Developer:** omgitsjan ([GitHub](https://github.com/omgitsjan))  
-**Extension:** Instagram Follow Checker  
+**Extension:** Follow Checker  
 **Source code:** https://github.com/omgitsjan/instagram-follow-checker  
 
-This privacy policy explains how the **Instagram Follow Checker** Chrome extension (“the Extension”) handles information when you use it.
+This privacy policy explains how the **Follow Checker** Chrome extension (“the Extension”) handles information when you use it.
+
+The Extension is unofficial and is **not** affiliated with, endorsed by, or sponsored by Meta or related companies.
 
 ---
 
 ## 1. Summary
 
 - The Extension runs **locally in your browser**.
-- It does **not** send your follower/following lists, Instagram data, or analysis results to our servers.
+- It does **not** send your follower/following lists, website data, or analysis results to our servers.
 - We do **not** operate a backend that collects personal data for this Extension.
 - Optional links (GitHub, PayPal tip) open third-party websites outside the Extension; those sites have their own policies.
 
@@ -22,22 +24,22 @@ This privacy policy explains how the **Instagram Follow Checker** Chrome extensi
 
 The Extension has one purpose only:
 
-**Help you review Instagram follow relationships** (mutual follows, people who do not follow you back, and people you do not follow) using the Instagram web session already open in your browser, and optionally follow or unfollow accounts from that review.
+**Help you review follow relationships** (mutual follows, people who do not follow you back, and people you do not follow) using the instagram.com web session already open in your browser, and optionally follow or unfollow accounts from that review.
 
 ---
 
 ## 3. What data is processed
 
-When you run an analysis while logged into Instagram in Chrome, the Extension may process **in your browser**:
+When you run an analysis while logged into instagram.com in Chrome, the Extension may process **in your browser**:
 
 | Data | Examples | Where it is handled |
 |------|----------|---------------------|
-| Instagram account identifiers | Your user id / username (from the open session) | Locally in the browser |
+| Account identifiers | Your user id / username (from the open session) | Locally in the browser |
 | Relationship lists | Usernames, display names, profile picture URLs, private/public flags of accounts in your followers/following lists | Locally in the browser |
 | Analysis results | Mutual / not following back / not followed lists | Locally in Chrome storage (optional cache) |
 | Preferences | UI language (English/German) | Locally in Chrome storage |
 
-The Extension does **not** ask you to enter your Instagram password into the Extension UI. It uses the session you already have on `instagram.com`.
+The Extension does **not** ask you to enter your website password into the Extension UI. It uses the session you already have on `instagram.com`.
 
 ### What we do **not** collect
 
@@ -48,7 +50,7 @@ We do **not** intentionally collect or transmit to the developer:
 - Authentication secrets (passwords, PINs) typed into the Extension  
 - Private messages / DMs content for our own storage  
 - Precise location or IP addresses for our own analytics  
-- Browsing history outside Instagram pages needed for the feature  
+- Browsing history outside instagram.com pages needed for the feature  
 - Keystroke/mouse analytics for tracking  
 
 ---
@@ -77,7 +79,7 @@ Data is **not** used for advertising, credit scoring, resale, or unrelated analy
 ## 6. Third parties
 
 ### Instagram / Meta  
-Using Instagram is subject to Meta/Instagram terms and privacy policies. Network requests the Extension makes while you use Instagram go to Instagram’s infrastructure (same kind of web endpoints the Instagram website uses). We do not control Meta’s processing.
+Using the Instagram website is subject to Meta terms and privacy policies. Network requests the Extension makes while you use that website go to that site’s infrastructure (same kind of web endpoints the website uses). We do not control Meta’s processing.
 
 ### GitHub (open source link)  
 If you open the open-source link, GitHub’s privacy policy applies.
@@ -100,8 +102,8 @@ The Extension does **not** load or execute remote JavaScript/Wasm. All extension
 
 | Permission | Reason |
 |------------|--------|
-| `activeTab` / tab messaging | Communicate with the open Instagram tab to start analysis and actions |
-| `scripting` | Inject/ensure the content script on Instagram when needed |
+| `activeTab` / tab messaging | Communicate with the open instagram.com tab to start analysis and actions |
+| `scripting` | Inject/ensure the content script on instagram.com when needed |
 | `storage` | Save language preference and last local result |
 | Host access to `instagram.com` (and related image CDNs) | Read relationship lists via the logged-in web session and show profile pictures |
 
@@ -109,7 +111,7 @@ The Extension does **not** load or execute remote JavaScript/Wasm. All extension
 
 ## 9. Children
 
-The Extension is not directed at children under 13 (or the minimum age required by local law / Instagram). Do not use it if you are not allowed to use Instagram.
+The Extension is not directed at children under 13 (or the minimum age required by local law / the website). Do not use it if you are not allowed to use instagram.com.
 
 ---
 
@@ -117,7 +119,7 @@ The Extension is not directed at children under 13 (or the minimum age required 
 
 - Do not start an analysis if you do not want relationship lists processed locally.  
 - Uninstall the Extension to stop processing and remove local extension data (subject to Chrome behavior).  
-- Use Instagram’s own settings and tools for account-level privacy.
+- Use the website’s own settings and tools for account-level privacy.
 
 ---
 
@@ -140,5 +142,5 @@ https://github.com/omgitsjan
 
 ## 13. German short notice / Deutsch
 
-Diese Erweiterung verarbeitet Follower-/Following-Informationen **nur lokal in deinem Browser**, speichert optional Sprache und das letzte Ergebnis in `chrome.storage.local` und **sendet keine Analyse-Daten an Server des Entwicklers**. Es gibt **keinen Remotecode**. Nutzung von Instagram unterliegt den Regeln von Meta/Instagram. Optional Links zu GitHub und PayPal führen zu Drittanbietern mit eigenen Datenschutzregeln.  
+Diese Erweiterung verarbeitet Follower-/Following-Informationen **nur lokal in deinem Browser**, speichert optional Sprache und das letzte Ergebnis in `chrome.storage.local` und **sendet keine Analyse-Daten an Server des Entwicklers**. Es gibt **keinen Remotecode**. Inoffiziell, nicht mit Meta verbunden. Nutzung von instagram.com unterliegt den Regeln von Meta. Optional Links zu GitHub und PayPal führen zu Drittanbietern mit eigenen Datenschutzregeln.  
 Vollständige Angaben siehe Abschnitte oben (English is the full legal text).
