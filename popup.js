@@ -74,6 +74,7 @@ function applyStaticI18n() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
     if (!key) return;
+    // Don't overwrite live @username in account line
     if (el.id === "accountLine" && state.me?.username) return;
     el.textContent = t(key);
   });
@@ -96,10 +97,12 @@ function applyStaticI18n() {
     }
   });
 
+  // Language toggle UI
   document.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.lang === state.lang);
   });
 
+  // Keep gear/X label in the open language
   if (typeof isSettingsOpen === "function") {
     syncSettingsToggleUi(isSettingsOpen());
   }
@@ -108,6 +111,7 @@ function applyStaticI18n() {
     accountLine.textContent = t("tagline");
   }
 
+  // Re-render dynamic lists so button labels update
   if (state.counts) {
     renderAll();
     renderAnalytics();
@@ -124,10 +128,4 @@ function applyStaticI18n() {
       state.statusIsIdle = false;
     }
   }
-}
-
-function setHeaderLogoFallback() {
-  if (!headerLogo) return;
-  headerLogo.classList.remove("has-photo");
-  headerLogo.innerHTML = '<span class="logo-fallback">FC</span>';
 }
