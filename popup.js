@@ -129,3 +129,9 @@ function applyStaticI18n() {
     }
   }
 }
+
+function setHeaderLogoFallback() {
+  if (!headerLogo) return;
+  headerLogo.classList.remove("has-photo");
+  headerLogo.innerHTML = '<span class="logo-fallback">FC</span>';
+}
